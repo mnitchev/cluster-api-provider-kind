@@ -13,15 +13,16 @@ RUN go mod download
 COPY main.go main.go
 COPY api/ api/
 COPY controllers/ controllers/
-
+RUN curl -sLo docker-20.10.9.tgz https://download.docker.com/linux/static/stable/x86_64/docker-20.10.9.tgz && \
+    tar xzvf docker-20.10.9.tgz
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
+FROM ubuntu:latest
 WORKDIR /
 COPY --from=builder /workspace/manager .
-USER 65532:65532
+COPY --from=builder /workspace/docker/docker /usr/bin/docker
 
 ENTRYPOINT ["/manager"]
