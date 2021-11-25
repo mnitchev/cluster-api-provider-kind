@@ -25,17 +25,12 @@ import (
 
 // KindClusterSpec defines the desired state of KindCluster
 type KindClusterSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of KindCluster. Edit kindcluster_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Name string `json:"name"`
 }
 
 // KindClusterStatus defines the observed state of KindCluster
-type KindClusterStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+type KindClusterStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+	Ready bool `json:"ready"`
 }
 
 //+kubebuilder:object:root=true

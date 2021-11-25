@@ -19,18 +19,36 @@ package controllers
 import (
 	"context"
 
-	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/kind/pkg/cluster"
 
 	infrastructurev1alpha3 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
 )
 
+//counterfeiter:generate . ClusterProvider
+//counterfeiter:generate . APIClient
+
+type ClusterProvider interface {
+	Create(string, ...cluster.CreateOption) error
+}
+
+type APIClient interface {
+	GetKindCluster(context.Context, types.NamespacedName) (*infrastructurev1alpha3.KindCluster, error)
+}
+
 // KindClusterReconciler reconciles a KindCluster object
 type KindClusterReconciler struct {
-	client.Client
-	Scheme *runtime.Scheme
+	runtimeClient   APIClient
+	clusterProvider ClusterProvider
+}
+
+func NewKindClusterReconciler(client APIClient, clusterProvider ClusterProvider) *KindClusterReconciler {
+	return &KindClusterReconciler{
+		runtimeClient:   client,
+		clusterProvider: clusterProvider,
+	}
 }
 
 //+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=kindclusters,verbs=get;list;watch;create;update;patch;delete
@@ -47,9 +65,19 @@ type KindClusterReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.10.0/pkg/reconcile
 func (r *KindClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
-	// TODO(user): your logic here
+	kindCluster, err := r.runtimeClient.GetKindCluster(ctx, req.NamespacedName)
+	if err != nil {
+		logger.Error(err, "failed to get KindCluster")
+		return ctrl.Result{}, err
+	}
+
+	err = r.clusterProvider.Create(kindCluster.Spec.Name)
+	if err != nil {
+		logger.Error(err, "failed to create cluster")
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }

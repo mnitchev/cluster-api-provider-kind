@@ -30,9 +30,11 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/kind/pkg/cluster"
 
 	infrastructurev1alpha3 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
 	"github.com/mnitchev/cluster-api-provider-kind/controllers"
+	"github.com/mnitchev/cluster-api-provider-kind/k8s"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -78,10 +80,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.KindClusterReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	reconciler := controllers.NewKindClusterReconciler(&k8s.Client{}, cluster.NewProvider())
+	if err := reconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "KindCluster")
 		os.Exit(1)
 	}
