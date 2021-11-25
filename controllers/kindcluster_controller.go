@@ -22,7 +22,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/kind/pkg/cluster"
 
 	kclustersv1alpha3 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
 )
@@ -31,7 +30,7 @@ import (
 //counterfeiter:generate . KindClusterClient
 
 type ClusterProvider interface {
-	Create(string, ...cluster.CreateOption) error
+	Create(string) error
 }
 
 type KindClusterClient interface {

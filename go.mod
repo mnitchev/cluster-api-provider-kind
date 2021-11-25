@@ -3,6 +3,7 @@ module github.com/mnitchev/cluster-api-provider-kind
 go 1.16
 
 require (
+	github.com/google/uuid v1.1.2
 	github.com/maxbrunsfeld/counterfeiter/v6 v6.4.1
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.15.0

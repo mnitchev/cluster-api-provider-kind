@@ -71,9 +71,8 @@ var _ = Describe("KindclusterController", func() {
 
 		It("creates a cluster using the cluster provider", func() {
 			Expect(clusterProvider.CreateCallCount()).To(Equal(1))
-			name, opts := clusterProvider.CreateArgsForCall(0)
+			name := clusterProvider.CreateArgsForCall(0)
 			Expect(name).To(Equal("the-kind-cluster-name"))
-			Expect(opts).To(BeEmpty())
 		})
 
 		When("getting the kind cluster fails", func() {

@@ -5,15 +5,13 @@ import (
 	"sync"
 
 	"github.com/mnitchev/cluster-api-provider-kind/controllers"
-	"sigs.k8s.io/kind/pkg/cluster"
 )
 
 type FakeClusterProvider struct {
-	CreateStub        func(string, ...cluster.CreateOption) error
+	CreateStub        func(string) error
 	createMutex       sync.RWMutex
 	createArgsForCall []struct {
 		arg1 string
-		arg2 []cluster.CreateOption
 	}
 	createReturns struct {
 		result1 error
@@ -25,19 +23,18 @@ type FakeClusterProvider struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeClusterProvider) Create(arg1 string, arg2 ...cluster.CreateOption) error {
+func (fake *FakeClusterProvider) Create(arg1 string) error {
 	fake.createMutex.Lock()
 	ret, specificReturn := fake.createReturnsOnCall[len(fake.createArgsForCall)]
 	fake.createArgsForCall = append(fake.createArgsForCall, struct {
 		arg1 string
-		arg2 []cluster.CreateOption
-	}{arg1, arg2})
+	}{arg1})
 	stub := fake.CreateStub
 	fakeReturns := fake.createReturns
-	fake.recordInvocation("Create", []interface{}{arg1, arg2})
+	fake.recordInvocation("Create", []interface{}{arg1})
 	fake.createMutex.Unlock()
 	if stub != nil {
-		return stub(arg1, arg2...)
+		return stub(arg1)
 	}
 	if specificReturn {
 		return ret.result1
@@ -51,17 +48,17 @@ func (fake *FakeClusterProvider) CreateCallCount() int {
 	return len(fake.createArgsForCall)
 }
 
-func (fake *FakeClusterProvider) CreateCalls(stub func(string, ...cluster.CreateOption) error) {
+func (fake *FakeClusterProvider) CreateCalls(stub func(string) error) {
 	fake.createMutex.Lock()
 	defer fake.createMutex.Unlock()
 	fake.CreateStub = stub
 }
 
-func (fake *FakeClusterProvider) CreateArgsForCall(i int) (string, []cluster.CreateOption) {
+func (fake *FakeClusterProvider) CreateArgsForCall(i int) string {
 	fake.createMutex.RLock()
 	defer fake.createMutex.RUnlock()
 	argsForCall := fake.createArgsForCall[i]
-	return argsForCall.arg1, argsForCall.arg2
+	return argsForCall.arg1
 }
 
 func (fake *FakeClusterProvider) CreateReturns(result1 error) {

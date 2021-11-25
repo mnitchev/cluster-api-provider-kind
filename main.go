@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,6 +34,7 @@ import (
 
 	infrastructurev1alpha3 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
 	"github.com/mnitchev/cluster-api-provider-kind/controllers"
+	"github.com/mnitchev/cluster-api-provider-kind/infrastructure"
 	"github.com/mnitchev/cluster-api-provider-kind/k8s"
 	//+kubebuilder:scaffold:imports
 )
@@ -80,7 +81,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	reconciler := controllers.NewKindClusterReconciler(&k8s.KindClusters{}, cluster.NewProvider())
+	reconciler := controllers.NewKindClusterReconciler(
+		k8s.NewKindClusters(mgr.GetClient()),
+		infrastructure.NewKindProvider(os.Getenv("KUBECONFIG"), cluster.NewProvider()),
+	)
 	if err := reconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "KindCluster")
 		os.Exit(1)
