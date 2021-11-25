@@ -24,27 +24,27 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/kind/pkg/cluster"
 
-	infrastructurev1alpha3 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
+	kclustersv1alpha3 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
 )
 
 //counterfeiter:generate . ClusterProvider
-//counterfeiter:generate . APIClient
+//counterfeiter:generate . KindClusterClient
 
 type ClusterProvider interface {
 	Create(string, ...cluster.CreateOption) error
 }
 
-type APIClient interface {
-	GetKindCluster(context.Context, types.NamespacedName) (*infrastructurev1alpha3.KindCluster, error)
+type KindClusterClient interface {
+	Get(context.Context, types.NamespacedName) (*kclustersv1alpha3.KindCluster, error)
 }
 
 // KindClusterReconciler reconciles a KindCluster object
 type KindClusterReconciler struct {
-	runtimeClient   APIClient
+	runtimeClient   KindClusterClient
 	clusterProvider ClusterProvider
 }
 
-func NewKindClusterReconciler(client APIClient, clusterProvider ClusterProvider) *KindClusterReconciler {
+func NewKindClusterReconciler(client KindClusterClient, clusterProvider ClusterProvider) *KindClusterReconciler {
 	return &KindClusterReconciler{
 		runtimeClient:   client,
 		clusterProvider: clusterProvider,
@@ -67,7 +67,7 @@ func NewKindClusterReconciler(client APIClient, clusterProvider ClusterProvider)
 func (r *KindClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	kindCluster, err := r.runtimeClient.GetKindCluster(ctx, req.NamespacedName)
+	kindCluster, err := r.runtimeClient.Get(ctx, req.NamespacedName)
 	if err != nil {
 		logger.Error(err, "failed to get KindCluster")
 		return ctrl.Result{}, err
@@ -85,6 +85,6 @@ func (r *KindClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 // SetupWithManager sets up the controller with the Manager.
 func (r *KindClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&infrastructurev1alpha3.KindCluster{}).
+		For(&kclustersv1alpha3.KindCluster{}).
 		Complete(r)
 }

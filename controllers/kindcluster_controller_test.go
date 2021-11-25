@@ -16,19 +16,19 @@ import (
 
 var _ = Describe("KindclusterController", func() {
 	var (
-		reconciler      *controllers.KindClusterReconciler
-		clusterProvider *controllersfakes.FakeClusterProvider
-		apiClient       *controllersfakes.FakeAPIClient
-		ctx             context.Context
-		result          ctrl.Result
-		reconcileErr    error
+		reconciler        *controllers.KindClusterReconciler
+		clusterProvider   *controllersfakes.FakeClusterProvider
+		kindClusterClient *controllersfakes.FakeKindClusterClient
+		ctx               context.Context
+		result            ctrl.Result
+		reconcileErr      error
 	)
 
 	BeforeEach(func() {
 		ctx = context.Background()
 		clusterProvider = new(controllersfakes.FakeClusterProvider)
-		apiClient = new(controllersfakes.FakeAPIClient)
-		reconciler = controllers.NewKindClusterReconciler(apiClient, clusterProvider)
+		kindClusterClient = new(controllersfakes.FakeKindClusterClient)
+		reconciler = controllers.NewKindClusterReconciler(kindClusterClient, clusterProvider)
 
 		cluster := v1alpha3.KindCluster{
 			ObjectMeta: metav1.ObjectMeta{
@@ -39,7 +39,7 @@ var _ = Describe("KindclusterController", func() {
 				Name: "the-kind-cluster-name",
 			},
 		}
-		apiClient.GetKindClusterReturns(&cluster, nil)
+		kindClusterClient.GetReturns(&cluster, nil)
 	})
 
 	JustBeforeEach(func() {
@@ -62,8 +62,8 @@ var _ = Describe("KindclusterController", func() {
 		})
 
 		It("gets the kind cluster using the api client", func() {
-			Expect(apiClient.GetKindClusterCallCount()).To(Equal(1))
-			actualCtx, namespacedName := apiClient.GetKindClusterArgsForCall(0)
+			Expect(kindClusterClient.GetCallCount()).To(Equal(1))
+			actualCtx, namespacedName := kindClusterClient.GetArgsForCall(0)
 			Expect(actualCtx).To(Equal(ctx))
 			Expect(namespacedName.Name).To(Equal("foo"))
 			Expect(namespacedName.Namespace).To(Equal("bar"))
@@ -78,7 +78,7 @@ var _ = Describe("KindclusterController", func() {
 
 		When("getting the kind cluster fails", func() {
 			BeforeEach(func() {
-				apiClient.GetKindClusterReturns(nil, errors.New("boom"))
+				kindClusterClient.GetReturns(nil, errors.New("boom"))
 			})
 
 			It("requeues the event", func() {

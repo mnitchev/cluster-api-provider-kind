@@ -80,7 +80,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	reconciler := controllers.NewKindClusterReconciler(&k8s.Client{}, cluster.NewProvider())
+	reconciler := controllers.NewKindClusterReconciler(&k8s.KindClusters{}, cluster.NewProvider())
 	if err := reconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "KindCluster")
 		os.Exit(1)
