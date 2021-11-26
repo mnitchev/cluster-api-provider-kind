@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
 	"github.com/mnitchev/cluster-api-provider-kind/controllers"
@@ -22,6 +23,7 @@ var _ = Describe("KindclusterController", func() {
 		ctx               context.Context
 		result            ctrl.Result
 		reconcileErr      error
+		cluster           *v1alpha3.KindCluster
 	)
 
 	BeforeEach(func() {
@@ -30,7 +32,7 @@ var _ = Describe("KindclusterController", func() {
 		kindClusterClient = new(controllersfakes.FakeKindClusterClient)
 		reconciler = controllers.NewKindClusterReconciler(kindClusterClient, clusterProvider)
 
-		cluster := v1alpha3.KindCluster{
+		cluster = &v1alpha3.KindCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "foo",
 				Namespace: "bar",
@@ -39,7 +41,7 @@ var _ = Describe("KindclusterController", func() {
 				Name: "the-kind-cluster-name",
 			},
 		}
-		kindClusterClient.GetReturns(&cluster, nil)
+		kindClusterClient.GetReturns(cluster, nil)
 	})
 
 	JustBeforeEach(func() {
@@ -75,6 +77,26 @@ var _ = Describe("KindclusterController", func() {
 			Expect(name).To(Equal("the-kind-cluster-name"))
 		})
 
+		It("registers the finalizer", func() {
+			Expect(kindClusterClient.AddFinalizerCallCount()).To(Equal(1))
+			_, actualCluster := kindClusterClient.AddFinalizerArgsForCall(0)
+			Expect(actualCluster).To(Equal(cluster))
+		})
+
+		When("adding the finalizer fails", func() {
+			BeforeEach(func() {
+				kindClusterClient.AddFinalizerReturns(errors.New("boom"))
+			})
+
+			It("returns an error", func() {
+				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
+			})
+
+			It("should not try to create the cluster", func() {
+				Expect(clusterProvider.CreateCallCount()).To(Equal(0))
+			})
+		})
+
 		When("the real kind cluster already exists", func() {
 			BeforeEach(func() {
 				clusterProvider.ExistsReturns(true, nil)
@@ -106,6 +128,28 @@ var _ = Describe("KindclusterController", func() {
 			})
 
 			It("requeues the event", func() {
+				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
+			})
+		})
+	})
+
+	Describe("Delete", func() {
+		BeforeEach(func() {
+			now := metav1.NewTime(time.Now())
+			cluster.DeletionTimestamp = &now
+			kindClusterClient.GetReturns(cluster, nil)
+		})
+
+		It("deletes the cluster", func() {
+			Expect(clusterProvider.DeleteCallCount()).To(Equal(1))
+		})
+
+		When("deleting the cluster fails", func() {
+			BeforeEach(func() {
+				clusterProvider.DeleteReturns(errors.New("boom"))
+			})
+
+			It("returns an error", func() {
 				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
 			})
 		})

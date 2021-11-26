@@ -34,3 +34,7 @@ func (p *KindProvider) Exists(name string) (bool, error) {
 
 	return false, nil
 }
+
+func (p *KindProvider) Delete(name string) error {
+	return p.clusterProvider.Delete(name, p.kubeconfigPath)
+}

@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,10 +36,12 @@ import (
 type ClusterProvider interface {
 	Create(string) error
 	Exists(string) (bool, error)
+	Delete(string) error
 }
 
 type KindClusterClient interface {
 	Get(context.Context, types.NamespacedName) (*kclustersv1alpha3.KindCluster, error)
+	AddFinalizer(context.Context, *kclustersv1alpha3.KindCluster) error
 }
 
 // KindClusterReconciler reconciles a KindCluster object
@@ -71,9 +73,19 @@ func (r *KindClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 
+	if !kindCluster.DeletionTimestamp.IsZero() {
+		err = r.clusterProvider.Delete(kindCluster.Spec.Name)
+		return ctrl.Result{}, err
+	}
+
 	exists, _ := r.clusterProvider.Exists(kindCluster.Spec.Name)
 	if exists {
 		return ctrl.Result{}, nil
+	}
+
+	err = r.runtimeClient.AddFinalizer(ctx, kindCluster)
+	if err != nil {
+		return ctrl.Result{}, err
 	}
 
 	err = r.clusterProvider.Create(kindCluster.Spec.Name)

@@ -11,6 +11,18 @@ import (
 )
 
 type FakeKindClusterClient struct {
+	AddFinalizerStub        func(context.Context, *v1alpha3.KindCluster) error
+	addFinalizerMutex       sync.RWMutex
+	addFinalizerArgsForCall []struct {
+		arg1 context.Context
+		arg2 *v1alpha3.KindCluster
+	}
+	addFinalizerReturns struct {
+		result1 error
+	}
+	addFinalizerReturnsOnCall map[int]struct {
+		result1 error
+	}
 	GetStub        func(context.Context, types.NamespacedName) (*v1alpha3.KindCluster, error)
 	getMutex       sync.RWMutex
 	getArgsForCall []struct {
@@ -27,6 +39,68 @@ type FakeKindClusterClient struct {
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
+}
+
+func (fake *FakeKindClusterClient) AddFinalizer(arg1 context.Context, arg2 *v1alpha3.KindCluster) error {
+	fake.addFinalizerMutex.Lock()
+	ret, specificReturn := fake.addFinalizerReturnsOnCall[len(fake.addFinalizerArgsForCall)]
+	fake.addFinalizerArgsForCall = append(fake.addFinalizerArgsForCall, struct {
+		arg1 context.Context
+		arg2 *v1alpha3.KindCluster
+	}{arg1, arg2})
+	stub := fake.AddFinalizerStub
+	fakeReturns := fake.addFinalizerReturns
+	fake.recordInvocation("AddFinalizer", []interface{}{arg1, arg2})
+	fake.addFinalizerMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeKindClusterClient) AddFinalizerCallCount() int {
+	fake.addFinalizerMutex.RLock()
+	defer fake.addFinalizerMutex.RUnlock()
+	return len(fake.addFinalizerArgsForCall)
+}
+
+func (fake *FakeKindClusterClient) AddFinalizerCalls(stub func(context.Context, *v1alpha3.KindCluster) error) {
+	fake.addFinalizerMutex.Lock()
+	defer fake.addFinalizerMutex.Unlock()
+	fake.AddFinalizerStub = stub
+}
+
+func (fake *FakeKindClusterClient) AddFinalizerArgsForCall(i int) (context.Context, *v1alpha3.KindCluster) {
+	fake.addFinalizerMutex.RLock()
+	defer fake.addFinalizerMutex.RUnlock()
+	argsForCall := fake.addFinalizerArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeKindClusterClient) AddFinalizerReturns(result1 error) {
+	fake.addFinalizerMutex.Lock()
+	defer fake.addFinalizerMutex.Unlock()
+	fake.AddFinalizerStub = nil
+	fake.addFinalizerReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeKindClusterClient) AddFinalizerReturnsOnCall(i int, result1 error) {
+	fake.addFinalizerMutex.Lock()
+	defer fake.addFinalizerMutex.Unlock()
+	fake.AddFinalizerStub = nil
+	if fake.addFinalizerReturnsOnCall == nil {
+		fake.addFinalizerReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.addFinalizerReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
 }
 
 func (fake *FakeKindClusterClient) Get(arg1 context.Context, arg2 types.NamespacedName) (*v1alpha3.KindCluster, error) {
@@ -97,6 +171,8 @@ func (fake *FakeKindClusterClient) GetReturnsOnCall(i int, result1 *v1alpha3.Kin
 func (fake *FakeKindClusterClient) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
+	fake.addFinalizerMutex.RLock()
+	defer fake.addFinalizerMutex.RUnlock()
 	fake.getMutex.RLock()
 	defer fake.getMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}

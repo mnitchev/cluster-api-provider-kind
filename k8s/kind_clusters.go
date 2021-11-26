@@ -6,7 +6,10 @@ import (
 	"github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
+
+const ClusterFinalizer = "kindcluster.infrastructure.cluster.x-k8s.io"
 
 type KindClusters struct {
 	runtimeClient client.Client
@@ -26,4 +29,9 @@ func (c *KindClusters) Get(ctx context.Context, namespacedName types.NamespacedN
 	}
 
 	return cluster, nil
+}
+
+func (c *KindClusters) AddFinalizer(ctx context.Context, cluster *v1alpha3.KindCluster) error {
+	controllerutil.AddFinalizer(cluster, ClusterFinalizer)
+	return c.runtimeClient.Update(ctx, cluster)
 }

@@ -59,7 +59,7 @@ var _ = Describe("KindProvider", func() {
 				Expect(clusterProvider.Delete(name, kubeconfig)).To(Succeed())
 			})
 
-			It("returns the true", func() {
+			It("returns true", func() {
 				exists, err := kindProvider.Exists(name)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(exists).To(BeTrue())
@@ -75,11 +75,37 @@ var _ = Describe("KindProvider", func() {
 		})
 	})
 
+	Describe("Delete", func() {
+		When("the cluster exists", func() {
+			BeforeEach(func() {
+				err := clusterProvider.Create(name, cluster.CreateWithKubeconfigPath(kubeconfig))
+				Expect(err).NotTo(HaveOccurred())
+			})
+
+			It("succeeds", func() {
+				err := kindProvider.Delete(name)
+				Expect(err).NotTo(HaveOccurred())
+
+				clusters, err := clusterProvider.List()
+				Expect(err).NotTo(HaveOccurred())
+				Expect(clusters).NotTo(ContainElement(name))
+			})
+		})
+
+		When("the cluster does not exist", func() {
+			It("returns an error", func() {
+				err := kindProvider.Delete(name)
+				Expect(err).NotTo(HaveOccurred())
+			})
+		})
+	})
+
 	When("the docker binary is missing from the PATH", func() {
 		DescribeTable("operations return an error",
 			func(operation func() error) {
 				// save PATH so we can restore it after the test
 				pathEnv := os.Getenv("PATH")
+				// set PATH to empty, making the docker binary inaccessible
 				Expect(os.Setenv("PATH", "")).To(Succeed())
 
 				Expect(operation()).NotTo(Succeed())
@@ -95,6 +121,9 @@ var _ = Describe("KindProvider", func() {
 			Entry("exists", func() error {
 				_, err := kindProvider.Exists(name)
 				return err
+			}),
+			Entry("delete", func() error {
+				return kindProvider.Delete(name)
 			}),
 		)
 	})

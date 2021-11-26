@@ -40,17 +40,35 @@ var _ = Describe("KindClusters", func() {
 		Expect(k8sClient.Delete(ctx, kindCluster)).To(Succeed())
 	})
 
-	It("gets the existing kind cluster", func() {
-		actualCluster, err := kindClusters.Get(ctx, types.NamespacedName{Name: "potato", Namespace: "default"})
-		Expect(err).NotTo(HaveOccurred())
-		Expect(actualCluster).To(Equal(kindCluster))
+	Describe("Get", func() {
+		It("gets the existing kind cluster", func() {
+			actualCluster, err := kindClusters.Get(ctx, types.NamespacedName{Name: "potato", Namespace: "default"})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(actualCluster).To(Equal(kindCluster))
+		})
+
+		When("the cluster does not exist", func() {
+			It("returns a not found error", func() {
+				actualCluster, err := kindClusters.Get(ctx, types.NamespacedName{Name: "carrot", Namespace: "default"})
+				Expect(errors.IsNotFound(err)).To(BeTrue())
+				Expect(actualCluster).To(BeNil())
+			})
+		})
 	})
 
-	When("the cluster does not exist", func() {
-		It("returns a not found error", func() {
-			actualCluster, err := kindClusters.Get(ctx, types.NamespacedName{Name: "carrot", Namespace: "default"})
-			Expect(errors.IsNotFound(err)).To(BeTrue())
-			Expect(actualCluster).To(BeNil())
+	Describe("AddFinalizer", func() {
+		It("updates the existing kind cluster", func() {
+			err := kindClusters.AddFinalizer(ctx, kindCluster)
+			Expect(err).NotTo(HaveOccurred())
+
+			namespacedName := types.NamespacedName{
+				Name:      "potato",
+				Namespace: "default",
+			}
+			actualCluster := &v1alpha3.KindCluster{}
+			err = k8sClient.Get(ctx, namespacedName, actualCluster)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(actualCluster.Finalizers).To(ContainElement(k8s.ClusterFinalizer))
 		})
 	})
 })
