@@ -29,8 +29,13 @@ import (
 //counterfeiter:generate . ClusterProvider
 //counterfeiter:generate . KindClusterClient
 
+//+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=kindclusters,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=kindclusters/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=kindclusters/finalizers,verbs=update
+
 type ClusterProvider interface {
 	Create(string) error
+	Exists(string) (bool, error)
 }
 
 type KindClusterClient interface {
@@ -50,19 +55,13 @@ func NewKindClusterReconciler(client KindClusterClient, clusterProvider ClusterP
 	}
 }
 
-//+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=kindclusters,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=kindclusters/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=kindclusters/finalizers,verbs=update
+// SetupWithManager sets up the controller with the Manager.
+func (r *KindClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&kclustersv1alpha3.KindCluster{}).
+		Complete(r)
+}
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the KindCluster object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.10.0/pkg/reconcile
 func (r *KindClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
@@ -72,6 +71,11 @@ func (r *KindClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, err
 	}
 
+	exists, _ := r.clusterProvider.Exists(kindCluster.Spec.Name)
+	if exists {
+		return ctrl.Result{}, nil
+	}
+
 	err = r.clusterProvider.Create(kindCluster.Spec.Name)
 	if err != nil {
 		logger.Error(err, "failed to create cluster")
@@ -79,11 +83,4 @@ func (r *KindClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	return ctrl.Result{}, nil
-}
-
-// SetupWithManager sets up the controller with the Manager.
-func (r *KindClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&kclustersv1alpha3.KindCluster{}).
-		Complete(r)
 }

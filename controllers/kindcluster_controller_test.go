@@ -75,6 +75,21 @@ var _ = Describe("KindclusterController", func() {
 			Expect(name).To(Equal("the-kind-cluster-name"))
 		})
 
+		When("the real kind cluster already exists", func() {
+			BeforeEach(func() {
+				clusterProvider.ExistsReturns(true, nil)
+			})
+
+			It("reconciles successfully", func() {
+				Expect(result.Requeue).To(BeFalse())
+				Expect(reconcileErr).NotTo(HaveOccurred())
+			})
+
+			It("should not try to create the cluster", func() {
+				Expect(clusterProvider.CreateCallCount()).To(Equal(0))
+			})
+		})
+
 		When("getting the kind cluster fails", func() {
 			BeforeEach(func() {
 				kindClusterClient.GetReturns(nil, errors.New("boom"))

@@ -19,6 +19,19 @@ type FakeClusterProvider struct {
 	createReturnsOnCall map[int]struct {
 		result1 error
 	}
+	ExistsStub        func(string) (bool, error)
+	existsMutex       sync.RWMutex
+	existsArgsForCall []struct {
+		arg1 string
+	}
+	existsReturns struct {
+		result1 bool
+		result2 error
+	}
+	existsReturnsOnCall map[int]struct {
+		result1 bool
+		result2 error
+	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
@@ -84,11 +97,77 @@ func (fake *FakeClusterProvider) CreateReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
+func (fake *FakeClusterProvider) Exists(arg1 string) (bool, error) {
+	fake.existsMutex.Lock()
+	ret, specificReturn := fake.existsReturnsOnCall[len(fake.existsArgsForCall)]
+	fake.existsArgsForCall = append(fake.existsArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	stub := fake.ExistsStub
+	fakeReturns := fake.existsReturns
+	fake.recordInvocation("Exists", []interface{}{arg1})
+	fake.existsMutex.Unlock()
+	if stub != nil {
+		return stub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeClusterProvider) ExistsCallCount() int {
+	fake.existsMutex.RLock()
+	defer fake.existsMutex.RUnlock()
+	return len(fake.existsArgsForCall)
+}
+
+func (fake *FakeClusterProvider) ExistsCalls(stub func(string) (bool, error)) {
+	fake.existsMutex.Lock()
+	defer fake.existsMutex.Unlock()
+	fake.ExistsStub = stub
+}
+
+func (fake *FakeClusterProvider) ExistsArgsForCall(i int) string {
+	fake.existsMutex.RLock()
+	defer fake.existsMutex.RUnlock()
+	argsForCall := fake.existsArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeClusterProvider) ExistsReturns(result1 bool, result2 error) {
+	fake.existsMutex.Lock()
+	defer fake.existsMutex.Unlock()
+	fake.ExistsStub = nil
+	fake.existsReturns = struct {
+		result1 bool
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeClusterProvider) ExistsReturnsOnCall(i int, result1 bool, result2 error) {
+	fake.existsMutex.Lock()
+	defer fake.existsMutex.Unlock()
+	fake.ExistsStub = nil
+	if fake.existsReturnsOnCall == nil {
+		fake.existsReturnsOnCall = make(map[int]struct {
+			result1 bool
+			result2 error
+		})
+	}
+	fake.existsReturnsOnCall[i] = struct {
+		result1 bool
+		result2 error
+	}{result1, result2}
+}
+
 func (fake *FakeClusterProvider) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
 	fake.createMutex.RLock()
 	defer fake.createMutex.RUnlock()
+	fake.existsMutex.RLock()
+	defer fake.existsMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value
