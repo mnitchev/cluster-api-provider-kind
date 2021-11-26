@@ -35,3 +35,8 @@ func (c *KindClusters) AddFinalizer(ctx context.Context, cluster *v1alpha3.KindC
 	controllerutil.AddFinalizer(cluster, ClusterFinalizer)
 	return c.runtimeClient.Update(ctx, cluster)
 }
+
+func (c *KindClusters) RemoveFinalizer(ctx context.Context, cluster *v1alpha3.KindCluster) error {
+	controllerutil.RemoveFinalizer(cluster, ClusterFinalizer)
+	return c.runtimeClient.Update(ctx, cluster)
+}

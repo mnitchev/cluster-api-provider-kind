@@ -37,6 +37,18 @@ type FakeKindClusterClient struct {
 		result1 *v1alpha3.KindCluster
 		result2 error
 	}
+	RemoveFinalizerStub        func(context.Context, *v1alpha3.KindCluster) error
+	removeFinalizerMutex       sync.RWMutex
+	removeFinalizerArgsForCall []struct {
+		arg1 context.Context
+		arg2 *v1alpha3.KindCluster
+	}
+	removeFinalizerReturns struct {
+		result1 error
+	}
+	removeFinalizerReturnsOnCall map[int]struct {
+		result1 error
+	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
@@ -168,6 +180,68 @@ func (fake *FakeKindClusterClient) GetReturnsOnCall(i int, result1 *v1alpha3.Kin
 	}{result1, result2}
 }
 
+func (fake *FakeKindClusterClient) RemoveFinalizer(arg1 context.Context, arg2 *v1alpha3.KindCluster) error {
+	fake.removeFinalizerMutex.Lock()
+	ret, specificReturn := fake.removeFinalizerReturnsOnCall[len(fake.removeFinalizerArgsForCall)]
+	fake.removeFinalizerArgsForCall = append(fake.removeFinalizerArgsForCall, struct {
+		arg1 context.Context
+		arg2 *v1alpha3.KindCluster
+	}{arg1, arg2})
+	stub := fake.RemoveFinalizerStub
+	fakeReturns := fake.removeFinalizerReturns
+	fake.recordInvocation("RemoveFinalizer", []interface{}{arg1, arg2})
+	fake.removeFinalizerMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeKindClusterClient) RemoveFinalizerCallCount() int {
+	fake.removeFinalizerMutex.RLock()
+	defer fake.removeFinalizerMutex.RUnlock()
+	return len(fake.removeFinalizerArgsForCall)
+}
+
+func (fake *FakeKindClusterClient) RemoveFinalizerCalls(stub func(context.Context, *v1alpha3.KindCluster) error) {
+	fake.removeFinalizerMutex.Lock()
+	defer fake.removeFinalizerMutex.Unlock()
+	fake.RemoveFinalizerStub = stub
+}
+
+func (fake *FakeKindClusterClient) RemoveFinalizerArgsForCall(i int) (context.Context, *v1alpha3.KindCluster) {
+	fake.removeFinalizerMutex.RLock()
+	defer fake.removeFinalizerMutex.RUnlock()
+	argsForCall := fake.removeFinalizerArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2
+}
+
+func (fake *FakeKindClusterClient) RemoveFinalizerReturns(result1 error) {
+	fake.removeFinalizerMutex.Lock()
+	defer fake.removeFinalizerMutex.Unlock()
+	fake.RemoveFinalizerStub = nil
+	fake.removeFinalizerReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeKindClusterClient) RemoveFinalizerReturnsOnCall(i int, result1 error) {
+	fake.removeFinalizerMutex.Lock()
+	defer fake.removeFinalizerMutex.Unlock()
+	fake.RemoveFinalizerStub = nil
+	if fake.removeFinalizerReturnsOnCall == nil {
+		fake.removeFinalizerReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.removeFinalizerReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
 func (fake *FakeKindClusterClient) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
@@ -175,6 +249,8 @@ func (fake *FakeKindClusterClient) Invocations() map[string][][]interface{} {
 	defer fake.addFinalizerMutex.RUnlock()
 	fake.getMutex.RLock()
 	defer fake.getMutex.RUnlock()
+	fake.removeFinalizerMutex.RLock()
+	defer fake.removeFinalizerMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

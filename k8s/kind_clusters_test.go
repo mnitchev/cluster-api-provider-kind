@@ -56,8 +56,8 @@ var _ = Describe("KindClusters", func() {
 		})
 	})
 
-	Describe("AddFinalizer", func() {
-		It("updates the existing kind cluster", func() {
+	Describe("Finalizers", func() {
+		It("adds and removes the finalizers", func() {
 			err := kindClusters.AddFinalizer(ctx, kindCluster)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -65,10 +65,16 @@ var _ = Describe("KindClusters", func() {
 				Name:      "potato",
 				Namespace: "default",
 			}
-			actualCluster := &v1alpha3.KindCluster{}
-			err = k8sClient.Get(ctx, namespacedName, actualCluster)
+			err = k8sClient.Get(ctx, namespacedName, kindCluster)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(actualCluster.Finalizers).To(ContainElement(k8s.ClusterFinalizer))
+			Expect(kindCluster.Finalizers).To(ContainElement(k8s.ClusterFinalizer))
+
+			err = kindClusters.RemoveFinalizer(ctx, kindCluster)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = k8sClient.Get(ctx, namespacedName, kindCluster)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(kindCluster.Finalizers).NotTo(ContainElement(k8s.ClusterFinalizer))
 		})
 	})
 })

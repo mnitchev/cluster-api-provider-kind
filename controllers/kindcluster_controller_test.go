@@ -144,6 +144,20 @@ var _ = Describe("KindclusterController", func() {
 			Expect(clusterProvider.DeleteCallCount()).To(Equal(1))
 		})
 
+		It("removes the finalizer", func() {
+			Expect(kindClusterClient.RemoveFinalizerCallCount()).To(Equal(1))
+		})
+
+		When("removing the finalizer fails", func() {
+			BeforeEach(func() {
+				kindClusterClient.RemoveFinalizerReturns(errors.New("boom"))
+			})
+
+			It("returns an error", func() {
+				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
+			})
+		})
+
 		When("deleting the cluster fails", func() {
 			BeforeEach(func() {
 				clusterProvider.DeleteReturns(errors.New("boom"))
@@ -151,6 +165,10 @@ var _ = Describe("KindclusterController", func() {
 
 			It("returns an error", func() {
 				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
+			})
+
+			It("does not remove the finalizer", func() {
+				Expect(kindClusterClient.RemoveFinalizerCallCount()).To(Equal(0))
 			})
 		})
 	})

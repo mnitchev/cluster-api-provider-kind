@@ -42,6 +42,7 @@ type ClusterProvider interface {
 type KindClusterClient interface {
 	Get(context.Context, types.NamespacedName) (*kclustersv1alpha3.KindCluster, error)
 	AddFinalizer(context.Context, *kclustersv1alpha3.KindCluster) error
+	RemoveFinalizer(context.Context, *kclustersv1alpha3.KindCluster) error
 }
 
 // KindClusterReconciler reconciles a KindCluster object
@@ -75,6 +76,11 @@ func (r *KindClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	if !kindCluster.DeletionTimestamp.IsZero() {
 		err = r.clusterProvider.Delete(kindCluster.Spec.Name)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+		err = r.runtimeClient.RemoveFinalizer(ctx, kindCluster)
 		return ctrl.Result{}, err
 	}
 
