@@ -62,6 +62,9 @@ lint:
 test: manifests generate fmt vet envtest ## Run tests.
 	./scripts/test
 
+test-integration: manifests generate fmt vet ## Run tests.
+	./scripts/run-integration-tests.sh
+
 ##@ Build
 
 .PHONY: build
