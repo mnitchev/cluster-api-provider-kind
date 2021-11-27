@@ -112,6 +112,16 @@ var _ = Describe("KindclusterController", func() {
 			})
 		})
 
+		When("checking if the cluster exists fails", func() {
+			BeforeEach(func() {
+				clusterProvider.ExistsReturns(false, errors.New("boom"))
+			})
+
+			It("requeues the event", func() {
+				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
+			})
+		})
+
 		When("getting the kind cluster fails", func() {
 			BeforeEach(func() {
 				kindClusterClient.GetReturns(nil, errors.New("boom"))

@@ -23,6 +23,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/go-logr/logr"
 	kclustersv1alpha3 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
 )
 
@@ -67,6 +68,7 @@ func (r *KindClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func (r *KindClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
+	logger = logger.WithValues("name", req.Name, "namespace", req.Namespace)
 
 	kindCluster, err := r.runtimeClient.Get(ctx, req.NamespacedName)
 	if err != nil {
@@ -75,22 +77,42 @@ func (r *KindClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	if !kindCluster.DeletionTimestamp.IsZero() {
-		err = r.clusterProvider.Delete(kindCluster.Spec.Name)
-		if err != nil {
-			return ctrl.Result{}, err
-		}
+		return r.reconcileDeletion(ctx, logger, kindCluster)
+	}
 
-		err = r.runtimeClient.RemoveFinalizer(ctx, kindCluster)
+	return r.reconcileNormal(ctx, logger, kindCluster)
+}
+
+func (r *KindClusterReconciler) reconcileDeletion(ctx context.Context, logger logr.Logger, kindCluster *kclustersv1alpha3.KindCluster) (ctrl.Result, error) {
+	err := r.clusterProvider.Delete(kindCluster.Spec.Name)
+	if err != nil {
+		logger.Error(err, "failed to delete kind cluster")
 		return ctrl.Result{}, err
 	}
 
-	exists, _ := r.clusterProvider.Exists(kindCluster.Spec.Name)
+	err = r.runtimeClient.RemoveFinalizer(ctx, kindCluster)
+	if err != nil {
+		logger.Error(err, "failed to remove finalizer")
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{}, nil
+}
+
+func (r *KindClusterReconciler) reconcileNormal(ctx context.Context, logger logr.Logger, kindCluster *kclustersv1alpha3.KindCluster) (ctrl.Result, error) {
+	exists, err := r.clusterProvider.Exists(kindCluster.Spec.Name)
+	if err != nil {
+		logger.Error(err, "failed to check if kind cluster exists")
+		return ctrl.Result{}, err
+	}
+
 	if exists {
 		return ctrl.Result{}, nil
 	}
 
 	err = r.runtimeClient.AddFinalizer(ctx, kindCluster)
 	if err != nil {
+		logger.Error(err, "failed to add finalizer")
 		return ctrl.Result{}, err
 	}
 
