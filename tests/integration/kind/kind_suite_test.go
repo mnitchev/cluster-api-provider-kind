@@ -1,4 +1,4 @@
-package integration_test
+package kind_test
 
 import (
 	"io/ioutil"

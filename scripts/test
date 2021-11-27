@@ -12,4 +12,4 @@ source "${ENVTEST_ASSETS_DIR}/setup-envtest.sh"
 fetch_envtest_tools "${ENVTEST_ASSETS_DIR}"
 setup_envtest_env "${ENVTEST_ASSETS_DIR}"
 
-ginkgo -p -r -randomizeAllSpecs --randomizeSuites $@
+ginkgo -p -r -randomizeAllSpecs --randomizeSuites --skipPackage=tests $@
