@@ -49,6 +49,19 @@ type FakeKindClusterClient struct {
 	removeFinalizerReturnsOnCall map[int]struct {
 		result1 error
 	}
+	UpdateStatusStub        func(context.Context, v1alpha3.KindClusterStatus, *v1alpha3.KindCluster) error
+	updateStatusMutex       sync.RWMutex
+	updateStatusArgsForCall []struct {
+		arg1 context.Context
+		arg2 v1alpha3.KindClusterStatus
+		arg3 *v1alpha3.KindCluster
+	}
+	updateStatusReturns struct {
+		result1 error
+	}
+	updateStatusReturnsOnCall map[int]struct {
+		result1 error
+	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
@@ -242,6 +255,69 @@ func (fake *FakeKindClusterClient) RemoveFinalizerReturnsOnCall(i int, result1 e
 	}{result1}
 }
 
+func (fake *FakeKindClusterClient) UpdateStatus(arg1 context.Context, arg2 v1alpha3.KindClusterStatus, arg3 *v1alpha3.KindCluster) error {
+	fake.updateStatusMutex.Lock()
+	ret, specificReturn := fake.updateStatusReturnsOnCall[len(fake.updateStatusArgsForCall)]
+	fake.updateStatusArgsForCall = append(fake.updateStatusArgsForCall, struct {
+		arg1 context.Context
+		arg2 v1alpha3.KindClusterStatus
+		arg3 *v1alpha3.KindCluster
+	}{arg1, arg2, arg3})
+	stub := fake.UpdateStatusStub
+	fakeReturns := fake.updateStatusReturns
+	fake.recordInvocation("UpdateStatus", []interface{}{arg1, arg2, arg3})
+	fake.updateStatusMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2, arg3)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeKindClusterClient) UpdateStatusCallCount() int {
+	fake.updateStatusMutex.RLock()
+	defer fake.updateStatusMutex.RUnlock()
+	return len(fake.updateStatusArgsForCall)
+}
+
+func (fake *FakeKindClusterClient) UpdateStatusCalls(stub func(context.Context, v1alpha3.KindClusterStatus, *v1alpha3.KindCluster) error) {
+	fake.updateStatusMutex.Lock()
+	defer fake.updateStatusMutex.Unlock()
+	fake.UpdateStatusStub = stub
+}
+
+func (fake *FakeKindClusterClient) UpdateStatusArgsForCall(i int) (context.Context, v1alpha3.KindClusterStatus, *v1alpha3.KindCluster) {
+	fake.updateStatusMutex.RLock()
+	defer fake.updateStatusMutex.RUnlock()
+	argsForCall := fake.updateStatusArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+}
+
+func (fake *FakeKindClusterClient) UpdateStatusReturns(result1 error) {
+	fake.updateStatusMutex.Lock()
+	defer fake.updateStatusMutex.Unlock()
+	fake.UpdateStatusStub = nil
+	fake.updateStatusReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeKindClusterClient) UpdateStatusReturnsOnCall(i int, result1 error) {
+	fake.updateStatusMutex.Lock()
+	defer fake.updateStatusMutex.Unlock()
+	fake.UpdateStatusStub = nil
+	if fake.updateStatusReturnsOnCall == nil {
+		fake.updateStatusReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.updateStatusReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
 func (fake *FakeKindClusterClient) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
@@ -251,6 +327,8 @@ func (fake *FakeKindClusterClient) Invocations() map[string][][]interface{} {
 	defer fake.getMutex.RUnlock()
 	fake.removeFinalizerMutex.RLock()
 	defer fake.removeFinalizerMutex.RUnlock()
+	fake.updateStatusMutex.RLock()
+	defer fake.updateStatusMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

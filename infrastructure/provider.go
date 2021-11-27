@@ -1,8 +1,12 @@
 package infrastructure
 
 import (
+	"time"
+
 	"sigs.k8s.io/kind/pkg/cluster"
 )
+
+const defaultWaitTime = 5 * time.Minute
 
 type KindProvider struct {
 	kubeconfigPath  string
@@ -17,7 +21,10 @@ func NewKindProvider(kubeconfigPath string, clusterProvider *cluster.Provider) *
 }
 
 func (p *KindProvider) Create(name string) error {
-	return p.clusterProvider.Create(name, cluster.CreateWithKubeconfigPath(p.kubeconfigPath))
+	return p.clusterProvider.Create(
+		name,
+		cluster.CreateWithKubeconfigPath(p.kubeconfigPath),
+		cluster.CreateWithWaitForReady(defaultWaitTime))
 }
 
 func (p *KindProvider) Exists(name string) (bool, error) {

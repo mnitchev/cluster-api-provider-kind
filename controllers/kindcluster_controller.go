@@ -46,6 +46,7 @@ type KindClusterClient interface {
 	Get(context.Context, types.NamespacedName) (*kclusterv1.KindCluster, error)
 	AddFinalizer(context.Context, *kclusterv1.KindCluster) error
 	RemoveFinalizer(context.Context, *kclusterv1.KindCluster) error
+	UpdateStatus(context.Context, kclusterv1.KindClusterStatus, *kclusterv1.KindCluster) error
 }
 
 type ClusterClient interface {
@@ -133,6 +134,20 @@ func (r *KindClusterReconciler) reconcileNormal(ctx context.Context, logger logr
 	err = r.clusterProvider.Create(kindCluster.Spec.Name)
 	if err != nil {
 		logger.Error(err, "failed to create cluster")
+		return ctrl.Result{}, err
+	}
+
+	return r.updateStatus(ctx, logger, kindCluster)
+}
+
+func (r *KindClusterReconciler) updateStatus(ctx context.Context, logger logr.Logger, kindCluster *kclusterv1.KindCluster) (ctrl.Result, error) {
+	status := kclusterv1.KindClusterStatus{
+		Ready: true,
+	}
+
+	err := r.kindClusters.UpdateStatus(ctx, status, kindCluster)
+	if err != nil {
+		logger.Error(err, "failed to update status")
 		return ctrl.Result{}, err
 	}
 

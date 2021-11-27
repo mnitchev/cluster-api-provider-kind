@@ -102,6 +102,14 @@ var _ = Describe("KindclusterController", func() {
 			Expect(actualCluster).To(Equal(kindCluster))
 		})
 
+		It("updates the status to ready", func() {
+			Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
+			actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
+			Expect(actualContext).To(Equal(ctx))
+			Expect(actualStatus.Ready).To(BeTrue())
+			Expect(actualCluster).To(Equal(kindCluster))
+		})
+
 		When("the KindCluster is not owned by a Cluster", func() {
 			BeforeEach(func() {
 				clusterClient.GetReturns(nil, nil)
@@ -170,6 +178,16 @@ var _ = Describe("KindclusterController", func() {
 		When("creating the cluster fails", func() {
 			BeforeEach(func() {
 				clusterProvider.CreateReturns(errors.New("boom"))
+			})
+
+			It("requeues the event", func() {
+				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
+			})
+		})
+
+		When("setting the status fails", func() {
+			BeforeEach(func() {
+				kindClusterClient.UpdateStatusReturns(errors.New("boom"))
 			})
 
 			It("requeues the event", func() {

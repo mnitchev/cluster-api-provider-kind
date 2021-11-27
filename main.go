@@ -82,6 +82,7 @@ func main() {
 	}
 
 	reconciler := controllers.NewKindClusterReconciler(
+		k8s.NewClusters(mgr.GetClient()),
 		k8s.NewKindClusters(mgr.GetClient()),
 		infrastructure.NewKindProvider(os.Getenv("KUBECONFIG"), cluster.NewProvider()),
 	)
