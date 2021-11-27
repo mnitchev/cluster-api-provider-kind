@@ -5,13 +5,14 @@ import (
 	"errors"
 	"time"
 
-	"github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
+	kclusterv1 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
 	"github.com/mnitchev/cluster-api-provider-kind/controllers"
 	"github.com/mnitchev/cluster-api-provider-kind/controllers/controllersfakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -20,28 +21,39 @@ var _ = Describe("KindclusterController", func() {
 		reconciler        *controllers.KindClusterReconciler
 		clusterProvider   *controllersfakes.FakeClusterProvider
 		kindClusterClient *controllersfakes.FakeKindClusterClient
+		clusterClient     *controllersfakes.FakeClusterClient
 		ctx               context.Context
 		result            ctrl.Result
 		reconcileErr      error
-		cluster           *v1alpha3.KindCluster
+		kindCluster       *kclusterv1.KindCluster
+		cluster           *clusterv1.Cluster
 	)
 
 	BeforeEach(func() {
 		ctx = context.Background()
 		clusterProvider = new(controllersfakes.FakeClusterProvider)
+		clusterClient = new(controllersfakes.FakeClusterClient)
 		kindClusterClient = new(controllersfakes.FakeKindClusterClient)
-		reconciler = controllers.NewKindClusterReconciler(kindClusterClient, clusterProvider)
+		reconciler = controllers.NewKindClusterReconciler(clusterClient, kindClusterClient, clusterProvider)
 
-		cluster = &v1alpha3.KindCluster{
+		kindCluster = &kclusterv1.KindCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "foo",
 				Namespace: "bar",
 			},
-			Spec: v1alpha3.KindClusterSpec{
+			Spec: kclusterv1.KindClusterSpec{
 				Name: "the-kind-cluster-name",
 			},
 		}
-		kindClusterClient.GetReturns(cluster, nil)
+		kindClusterClient.GetReturns(kindCluster, nil)
+
+		cluster = &clusterv1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "foo",
+				Namespace: "bar",
+			},
+		}
+		clusterClient.GetReturns(cluster, nil)
 	})
 
 	JustBeforeEach(func() {
@@ -63,12 +75,19 @@ var _ = Describe("KindclusterController", func() {
 			Expect(result.Requeue).To(BeFalse())
 		})
 
-		It("gets the kind cluster using the api client", func() {
+		It("gets the kind cluster using the client", func() {
 			Expect(kindClusterClient.GetCallCount()).To(Equal(1))
 			actualCtx, namespacedName := kindClusterClient.GetArgsForCall(0)
 			Expect(actualCtx).To(Equal(ctx))
 			Expect(namespacedName.Name).To(Equal("foo"))
 			Expect(namespacedName.Namespace).To(Equal("bar"))
+		})
+
+		It("gets the cluster-api Cluster using the client", func() {
+			Expect(clusterClient.GetCallCount()).To(Equal(1))
+			actualCtx, actualKindCluster := clusterClient.GetArgsForCall(0)
+			Expect(actualCtx).To(Equal(ctx))
+			Expect(actualKindCluster).To(Equal(kindCluster))
 		})
 
 		It("creates a cluster using the cluster provider", func() {
@@ -80,7 +99,23 @@ var _ = Describe("KindclusterController", func() {
 		It("registers the finalizer", func() {
 			Expect(kindClusterClient.AddFinalizerCallCount()).To(Equal(1))
 			_, actualCluster := kindClusterClient.AddFinalizerArgsForCall(0)
-			Expect(actualCluster).To(Equal(cluster))
+			Expect(actualCluster).To(Equal(kindCluster))
+		})
+
+		When("the KindCluster is not owned by a Cluster", func() {
+			BeforeEach(func() {
+				clusterClient.GetReturns(nil, nil)
+			})
+
+			It("does not return an error", func() {
+				Expect(reconcileErr).NotTo(HaveOccurred())
+				Expect(result.Requeue).NotTo(BeTrue())
+			})
+
+			It("does not create the cluster", func() {
+				Expect(clusterProvider.CreateCallCount()).To(Equal(0))
+				Expect(kindClusterClient.AddFinalizerCallCount()).To(Equal(0))
+			})
 		})
 
 		When("adding the finalizer fails", func() {
@@ -146,8 +181,8 @@ var _ = Describe("KindclusterController", func() {
 	Describe("Delete", func() {
 		BeforeEach(func() {
 			now := metav1.NewTime(time.Now())
-			cluster.DeletionTimestamp = &now
-			kindClusterClient.GetReturns(cluster, nil)
+			kindCluster.DeletionTimestamp = &now
+			kindClusterClient.GetReturns(kindCluster, nil)
 		})
 
 		It("deletes the cluster", func() {
@@ -158,6 +193,21 @@ var _ = Describe("KindclusterController", func() {
 			Expect(kindClusterClient.RemoveFinalizerCallCount()).To(Equal(1))
 		})
 
+		When("the KindCluster is not owned by a Cluster", func() {
+			BeforeEach(func() {
+				clusterClient.GetReturns(nil, nil)
+			})
+
+			It("does not return an error", func() {
+				Expect(reconcileErr).NotTo(HaveOccurred())
+				Expect(result.Requeue).NotTo(BeTrue())
+			})
+
+			It("does not create the cluster", func() {
+				Expect(clusterProvider.DeleteCallCount()).To(Equal(0))
+				Expect(kindClusterClient.RemoveFinalizerCallCount()).To(Equal(0))
+			})
+		})
 		When("removing the finalizer fails", func() {
 			BeforeEach(func() {
 				kindClusterClient.RemoveFinalizerReturns(errors.New("boom"))
