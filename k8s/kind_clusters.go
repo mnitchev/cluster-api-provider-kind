@@ -32,11 +32,13 @@ func (c *KindClusters) Get(ctx context.Context, namespacedName types.NamespacedN
 }
 
 func (c *KindClusters) AddFinalizer(ctx context.Context, cluster *v1alpha3.KindCluster) error {
+	originalCluster := cluster.DeepCopy()
 	controllerutil.AddFinalizer(cluster, ClusterFinalizer)
-	return c.runtimeClient.Update(ctx, cluster)
+	return c.runtimeClient.Patch(ctx, cluster, client.MergeFrom(originalCluster))
 }
 
 func (c *KindClusters) RemoveFinalizer(ctx context.Context, cluster *v1alpha3.KindCluster) error {
+	originalCluster := cluster.DeepCopy()
 	controllerutil.RemoveFinalizer(cluster, ClusterFinalizer)
-	return c.runtimeClient.Update(ctx, cluster)
+	return c.runtimeClient.Patch(ctx, cluster, client.MergeFrom(originalCluster))
 }
