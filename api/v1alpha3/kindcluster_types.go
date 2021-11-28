@@ -25,6 +25,7 @@ import (
 
 // KindClusterSpec defines the desired state of KindCluster
 type KindClusterSpec struct {
+	//+kubebuilder:validation:Required
 	Name string `json:"name"`
 }
 
@@ -35,6 +36,7 @@ type KindClusterStatus struct { // INSERT ADDITIONAL STATUS FIELD - define obser
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Ready",type=boolean,JSONPath=`.status.ready`
 
 // KindCluster is the Schema for the kindclusters API
 type KindCluster struct {

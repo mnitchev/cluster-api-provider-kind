@@ -16,7 +16,11 @@ spec:
     singular: kindcluster
   scope: Namespaced
   versions:
-  - name: v1alpha3
+  - additionalPrinterColumns:
+    - jsonPath: .status.ready
+      name: Ready
+      type: boolean
+    name: v1alpha3
     schema:
       openAPIV3Schema:
         description: KindCluster is the Schema for the kindclusters API
