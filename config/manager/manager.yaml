@@ -24,8 +24,10 @@ spec:
       labels:
         control-plane: controller-manager
     spec:
-      securityContext:
-        runAsNonRoot: true
+      volumes:
+      - name: docker-sock
+        hostPath:
+          path: /docker/docker.sock
       containers:
       - command:
         - /manager
@@ -33,6 +35,10 @@ spec:
         - --leader-elect
         image: controller:latest
         name: manager
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: docker-sock
+          mountPath: /var/run/docker.sock
         securityContext:
           allowPrivilegeEscalation: false
         livenessProbe:

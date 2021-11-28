@@ -58,12 +58,20 @@ vet: ## Run go vet against code.
 lint:
 	golangci-lint run -v
 
+create-acceptance-cluster:
+	IMAGE=$(IMG) ./scripts/create-acceptance-cluster.sh
+
 .PHONY: test
 test: manifests generate fmt vet envtest ## Run tests.
 	./scripts/test
 
 test-integration: manifests generate fmt vet ## Run tests.
 	./scripts/run-integration-tests.sh
+
+deploy-acceptance: docker-build create-acceptance-cluster deploy
+
+test-acceptance: deploy-acceptance
+	KUBECONFIG="$(HOME)/.kube/acceptance.yml" ginkgo -p -r -randomizeAllSpecs --randomizeSuites tests/acceptance
 
 ##@ Build
 
@@ -76,8 +84,8 @@ run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 
 .PHONY: docker-build
-docker-build: test ## Build docker image with the manager.
-	docker build -t ${IMG} .
+docker-build: ## Build docker image with the manager.
+	docker buildx build --load -t ${IMG} .
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
