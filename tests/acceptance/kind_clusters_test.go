@@ -2,7 +2,6 @@ package acceptance_test
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
@@ -12,6 +11,7 @@ import (
 	kclusterv1 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
@@ -31,7 +31,7 @@ var _ = Describe("KindClusters", func() {
 		clusterName = uuid.New().String()
 		clusterProvider = kindcluster.NewProvider()
 
-		namespace = fmt.Sprintf("test-%d", GinkgoParallelNode())
+		namespace = uuid.New().String()
 		namespaceObj = &corev1.Namespace{}
 		namespaceObj.Name = namespace
 		Expect(k8sClient.Create(ctx, namespaceObj)).To(Succeed())
@@ -64,19 +64,87 @@ var _ = Describe("KindClusters", func() {
 		Expect(k8sClient.Create(ctx, kindCluster)).To(Succeed())
 	})
 
-	AfterEach(func() {
-		Expect(k8sClient.Delete(ctx, namespaceObj)).To(Succeed())
-		Expect(k8sClient.Delete(ctx, kindCluster)).To(Succeed())
-		Expect(k8sClient.Delete(ctx, cluster)).To(Succeed())
-	})
-
 	Describe("Create", func() {
-		It("ceates a local kind cluster", func() {
+		AfterEach(func() {
+			Expect(k8sClient.Delete(ctx, namespaceObj)).To(Succeed())
+			Expect(k8sClient.Delete(ctx, kindCluster)).To(Succeed())
+			Expect(k8sClient.Delete(ctx, cluster)).To(Succeed())
+		})
+
+		It("creates a local kind cluster", func() {
 			Eventually(func() []string {
 				clusters, err := clusterProvider.List()
 				Expect(err).NotTo(HaveOccurred())
 				return clusters
-			}, "1m").Should(ContainElement(clusterName))
+			}).Should(ContainElement(clusterName))
+		})
+
+		It("sets the control plane endpoint", func() {
+			actualCluster := &kclusterv1.KindCluster{}
+			Eventually(func() bool {
+				namespacedName := types.NamespacedName{
+					Name:      "potato",
+					Namespace: namespace,
+				}
+				err := k8sClient.Get(ctx, namespacedName, actualCluster)
+				Expect(err).NotTo(HaveOccurred())
+				return actualCluster.Status.Ready
+			}).Should(BeTrue())
+			endpoint := actualCluster.Spec.ControlPlaneEndpoint
+			Expect(endpoint.Host).To(Equal("127.0.0.1"))
+			Expect(endpoint.Port).To(BeNumerically(">", 1024))
+		})
+
+		It("sets the owner cluster's status to Provisioned", func() {
+			actualCluster := &clusterv1.Cluster{}
+			Eventually(func() string {
+				namespacedName := types.NamespacedName{
+					Name:      "carrot",
+					Namespace: namespace,
+				}
+				err := k8sClient.Get(ctx, namespacedName, actualCluster)
+				Expect(err).NotTo(HaveOccurred())
+				return actualCluster.Status.Phase
+			}).Should(Equal(string(clusterv1.ClusterPhaseProvisioned)))
+		})
+	})
+
+	Describe("Delete clsuter-api Cluster", func() {
+		AfterEach(func() {
+			Expect(k8sClient.Delete(ctx, namespaceObj)).To(Succeed())
+		})
+
+		BeforeEach(func() {
+			actualCluster := &kclusterv1.KindCluster{}
+			Eventually(func() bool {
+				namespacedName := types.NamespacedName{
+					Name:      "potato",
+					Namespace: namespace,
+				}
+				err := k8sClient.Get(ctx, namespacedName, actualCluster)
+				Expect(err).NotTo(HaveOccurred())
+				return actualCluster.Status.Ready
+			}).Should(BeTrue())
+			Expect(k8sClient.Delete(ctx, cluster)).To(Succeed())
+		})
+
+		It("deletes the local kind cluster", func() {
+			Eventually(func() []string {
+				clusters, err := clusterProvider.List()
+				Expect(err).NotTo(HaveOccurred())
+				return clusters
+			}).ShouldNot(ContainElement(clusterName))
+		})
+
+		It("deletes the kind cluster", func() {
+			actualCluster := &kclusterv1.KindCluster{}
+			Eventually(func() error {
+				namespacedName := types.NamespacedName{
+					Name:      "potato",
+					Namespace: namespace,
+				}
+				return k8sClient.Get(ctx, namespacedName, actualCluster)
+			}).Should(HaveOccurred())
 		})
 	})
 })

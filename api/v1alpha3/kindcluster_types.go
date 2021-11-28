@@ -20,8 +20,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+type ClusterPhase string
+
+const (
+	ClusterPhasePending      ClusterPhase = "Pending"
+	ClusterPhaseProvisioning ClusterPhase = "Creating"
+	ClusterPhaseDeleting     ClusterPhase = "Deleting"
+	ClusterPhaseProvisioned  ClusterPhase = "Created"
+	ClusterPhaseReady        ClusterPhase = "Ready"
+)
 
 // KindClusterSpec defines the desired state of KindCluster
 type KindClusterSpec struct {
@@ -41,13 +48,17 @@ type APIEndpoint struct {
 }
 
 // KindClusterStatus defines the observed state of KindCluster
-type KindClusterStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+type KindClusterStatus struct {
+	//+kubebuilder:validation:Optional
 	Ready bool `json:"ready"`
+	//+kubebuilder:validation:Optional
+	Phase ClusterPhase `json:"phase"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Ready",type=boolean,JSONPath=`.status.ready`
+//+kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`
 
 // KindCluster is the Schema for the kindclusters API
 type KindCluster struct {

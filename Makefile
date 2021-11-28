@@ -71,7 +71,7 @@ test-integration: manifests generate fmt vet ## Run tests.
 deploy-acceptance: docker-build create-acceptance-cluster deploy
 
 test-acceptance: deploy-acceptance
-	KUBECONFIG="$(HOME)/.kube/acceptance.yml" ginkgo -p -r -randomizeAllSpecs --randomizeSuites tests/acceptance
+	KUBECONFIG="$(HOME)/.kube/acceptance.yml" ginkgo -r -randomizeAllSpecs --randomizeSuites tests/acceptance
 
 ##@ Build
 

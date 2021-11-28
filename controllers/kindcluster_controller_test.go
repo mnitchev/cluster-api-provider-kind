@@ -69,42 +69,106 @@ var _ = Describe("KindclusterController", func() {
 		result, reconcileErr = reconciler.Reconcile(ctx, request)
 	})
 
-	Describe("Create", func() {
+	It("does not return an error", func() {
+		Expect(reconcileErr).NotTo(HaveOccurred())
+	})
+
+	It("reconciles successfully", func() {
+		Expect(result.Requeue).To(BeFalse())
+	})
+
+	It("gets the kind cluster using the client", func() {
+		Expect(kindClusterClient.GetCallCount()).To(Equal(1))
+		actualCtx, namespacedName := kindClusterClient.GetArgsForCall(0)
+		Expect(actualCtx).To(Equal(ctx))
+		Expect(namespacedName.Name).To(Equal("foo"))
+		Expect(namespacedName.Namespace).To(Equal("bar"))
+	})
+
+	It("gets the cluster-api Cluster using the client", func() {
+		Expect(clusterClient.GetCallCount()).To(Equal(1))
+		actualCtx, actualKindCluster := clusterClient.GetArgsForCall(0)
+		Expect(actualCtx).To(Equal(ctx))
+		Expect(actualKindCluster).To(Equal(kindCluster))
+	})
+
+	It("updates the status to not ready and phase pending", func() {
+		Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
+		actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
+		Expect(actualContext).To(Equal(ctx))
+		Expect(actualStatus.Ready).To(BeFalse())
+		Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhasePending))
+		Expect(actualCluster).To(Equal(kindCluster))
+	})
+
+	When("getting the kind cluster fails", func() {
+		BeforeEach(func() {
+			kindClusterClient.GetReturns(nil, errors.New("boom"))
+		})
+
+		It("requeues the event", func() {
+			Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
+		})
+
+		When("the kind cluster does not exist", func() {
+			BeforeEach(func() {
+				kindClusterClient.GetReturns(nil, k8serrors.NewNotFound(schema.GroupResource{}, "foo"))
+			})
+			It("does not requeue the event", func() {
+				Expect(reconcileErr).NotTo(HaveOccurred())
+				Expect(result.Requeue).To(BeFalse())
+			})
+		})
+	})
+
+	When("the KindCluster is not owned by a Cluster", func() {
+		BeforeEach(func() {
+			clusterClient.GetReturns(nil, nil)
+		})
+
+		It("does not return an error", func() {
+			Expect(reconcileErr).NotTo(HaveOccurred())
+			Expect(result.Requeue).NotTo(BeTrue())
+		})
+
+		It("does not create the cluster", func() {
+			Expect(clusterProvider.CreateCallCount()).To(Equal(0))
+			Expect(kindClusterClient.AddFinalizerCallCount()).To(Equal(0))
+		})
+	})
+
+	When("getting the owner cluster fails", func() {
+		BeforeEach(func() {
+			clusterClient.GetReturns(nil, errors.New("boom"))
+		})
+
+		It("reqturns an error", func() {
+			Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
+		})
+	})
+
+	Describe("Phase Pending", func() {
+		BeforeEach(func() {
+			kindCluster.Status.Ready = false
+			kindCluster.Status.Phase = kclusterv1.ClusterPhasePending
+			kindClusterClient.GetReturns(kindCluster, nil)
+		})
+
 		It("does not return an error", func() {
 			Expect(reconcileErr).NotTo(HaveOccurred())
 		})
 
-		It("reconciles successfully", func() {
-			Expect(result.Requeue).To(BeFalse())
+		It("reques the event", func() {
+			Expect(result.Requeue).To(BeTrue())
 		})
 
-		It("gets the kind cluster using the client", func() {
-			Expect(kindClusterClient.GetCallCount()).To(Equal(1))
-			actualCtx, namespacedName := kindClusterClient.GetArgsForCall(0)
-			Expect(actualCtx).To(Equal(ctx))
-			Expect(namespacedName.Name).To(Equal("foo"))
-			Expect(namespacedName.Namespace).To(Equal("bar"))
-		})
-
-		It("gets the cluster-api Cluster using the client", func() {
-			Expect(clusterClient.GetCallCount()).To(Equal(1))
-			actualCtx, actualKindCluster := clusterClient.GetArgsForCall(0)
-			Expect(actualCtx).To(Equal(ctx))
-			Expect(actualKindCluster).To(Equal(kindCluster))
-		})
-
-		It("updates the status to not ready before creating the cluster", func() {
-			Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(2))
+		It("updates the status to not ready and phase provisioning", func() {
+			Expect(kindClusterClient.UpdateStatusCallCount()).To(BeNumerically(">=", 1))
 			actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
 			Expect(actualContext).To(Equal(ctx))
 			Expect(actualStatus.Ready).To(BeFalse())
+			Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhaseProvisioning))
 			Expect(actualCluster).To(Equal(kindCluster))
-		})
-
-		It("creates a cluster using the cluster provider", func() {
-			Expect(clusterProvider.CreateCallCount()).To(Equal(1))
-			name := clusterProvider.CreateArgsForCall(0)
-			Expect(name).To(Equal("the-kind-cluster-name"))
 		})
 
 		It("registers the finalizer", func() {
@@ -113,12 +177,95 @@ var _ = Describe("KindclusterController", func() {
 			Expect(actualCluster).To(Equal(kindCluster))
 		})
 
-		It("updates the status to ready", func() {
-			Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(2))
+		It("creates a cluster using the cluster provider", func() {
+			// use eventually as the implementation starts a go routine
+			Eventually(clusterProvider.CreateCallCount).Should(Equal(1))
+			name := clusterProvider.CreateArgsForCall(0)
+			Expect(name).To(Equal("the-kind-cluster-name"))
+		})
+
+		It("updates the status to provisioned after create finishes", func() {
+			Eventually(kindClusterClient.UpdateStatusCallCount).Should(Equal(2))
 			actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(1)
 			Expect(actualContext).To(Equal(ctx))
-			Expect(actualStatus.Ready).To(BeTrue())
+			Expect(actualStatus.Ready).To(BeFalse())
+			Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhaseProvisioned))
 			Expect(actualCluster).To(Equal(kindCluster))
+		})
+
+		When("adding the finalizer fails", func() {
+			BeforeEach(func() {
+				kindClusterClient.AddFinalizerReturns(errors.New("boom"))
+			})
+
+			It("returns an error", func() {
+				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
+			})
+
+			It("does not try to create the cluster", func() {
+				Expect(clusterProvider.CreateCallCount()).To(Equal(0))
+			})
+
+			It("does not update the status to provisioning", func() {
+				Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
+				actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
+				Expect(actualContext).To(Equal(ctx))
+				Expect(actualStatus.Ready).To(BeFalse())
+				Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhasePending))
+				Expect(actualCluster).To(Equal(kindCluster))
+			})
+		})
+
+		When("creating the cluster fails", func() {
+			BeforeEach(func() {
+				clusterProvider.CreateReturns(errors.New("boom"))
+			})
+
+			It("updates the status to not ready and phase pending", func() {
+				Eventually(kindClusterClient.UpdateStatusCallCount).Should(Equal(2))
+				actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(1)
+				Expect(actualContext).To(Equal(ctx))
+				Expect(actualStatus.Ready).To(BeFalse())
+				Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhasePending))
+				Expect(actualCluster).To(Equal(kindCluster))
+			})
+		})
+	})
+
+	Describe("Phase Provisioning", func() {
+		BeforeEach(func() {
+			kindCluster.Status.Ready = false
+			kindCluster.Status.Phase = kclusterv1.ClusterPhaseProvisioning
+			kindClusterClient.GetReturns(kindCluster, nil)
+		})
+
+		It("does not return an error", func() {
+			Expect(reconcileErr).NotTo(HaveOccurred())
+		})
+
+		It("reques the event", func() {
+			Expect(result.Requeue).To(BeTrue())
+		})
+
+		It("does not create a cluster", func() {
+			Expect(clusterProvider.CreateCallCount()).To(Equal(0))
+		})
+
+		It("does not get the control plane endpoint", func() {
+			Expect(clusterProvider.GetControlPlaneEndpointCallCount()).To(Equal(0))
+		})
+
+		It("does not update the status", func() {
+			Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(0))
+		})
+	})
+
+	Describe("Phase Provisioned", func() {
+		BeforeEach(func() {
+			kindCluster.Status.Ready = false
+			kindCluster.Status.Phase = kclusterv1.ClusterPhaseProvisioned
+			kindClusterClient.GetReturns(kindCluster, nil)
+			clusterProvider.ExistsReturns(true, nil)
 		})
 
 		It("gets the control plane endpoint", func() {
@@ -136,110 +283,13 @@ var _ = Describe("KindclusterController", func() {
 			Expect(actualCluster).To(Equal(kindCluster))
 		})
 
-		When("the KindCluster is not owned by a Cluster", func() {
-			BeforeEach(func() {
-				clusterClient.GetReturns(nil, nil)
-			})
-
-			It("does not return an error", func() {
-				Expect(reconcileErr).NotTo(HaveOccurred())
-				Expect(result.Requeue).NotTo(BeTrue())
-			})
-
-			It("does not create the cluster", func() {
-				Expect(clusterProvider.CreateCallCount()).To(Equal(0))
-				Expect(kindClusterClient.AddFinalizerCallCount()).To(Equal(0))
-			})
-		})
-
-		When("getting the owner cluster fails", func() {
-			BeforeEach(func() {
-				clusterClient.GetReturns(nil, errors.New("boom"))
-			})
-
-			It("reqturns an error", func() {
-				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
-			})
-		})
-
-		When("adding the finalizer fails", func() {
-			BeforeEach(func() {
-				kindClusterClient.AddFinalizerReturns(errors.New("boom"))
-			})
-
-			It("returns an error", func() {
-				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
-			})
-
-			It("should not try to create the cluster", func() {
-				Expect(clusterProvider.CreateCallCount()).To(Equal(0))
-			})
-		})
-
-		When("the real kind cluster already exists", func() {
-			BeforeEach(func() {
-				clusterProvider.ExistsReturns(true, nil)
-			})
-
-			It("reconciles successfully", func() {
-				Expect(result.Requeue).To(BeFalse())
-				Expect(reconcileErr).NotTo(HaveOccurred())
-			})
-
-			It("should not try to create the cluster", func() {
-				Expect(clusterProvider.CreateCallCount()).To(Equal(0))
-			})
-		})
-
-		When("checking if the cluster exists fails", func() {
-			BeforeEach(func() {
-				clusterProvider.ExistsReturns(false, errors.New("boom"))
-			})
-
-			It("requeues the event", func() {
-				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
-			})
-		})
-
-		When("getting the kind cluster fails", func() {
-			BeforeEach(func() {
-				kindClusterClient.GetReturns(nil, errors.New("boom"))
-			})
-
-			It("requeues the event", func() {
-				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
-			})
-
-			When("the kind cluster does not exist", func() {
-				BeforeEach(func() {
-					kindClusterClient.GetReturns(nil, k8serrors.NewNotFound(schema.GroupResource{}, "foo"))
-				})
-				It("does not requeue the event", func() {
-					Expect(reconcileErr).NotTo(HaveOccurred())
-					Expect(result.Requeue).To(BeFalse())
-				})
-			})
-		})
-
-		When("creating the cluster fails", func() {
-			BeforeEach(func() {
-				clusterProvider.CreateReturns(errors.New("boom"))
-			})
-
-			It("requeues the event", func() {
-				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
-			})
-		})
-
-		When("setting the not ready status fails", func() {
-			BeforeEach(func() {
-				kindClusterClient.UpdateStatusReturns(errors.New("boom"))
-			})
-
-			It("requeues the event", func() {
-				Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
-				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
-			})
+		It("updates the status to ready and phase ready", func() {
+			Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
+			actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
+			Expect(actualContext).To(Equal(ctx))
+			Expect(actualStatus.Ready).To(BeTrue())
+			Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhaseReady))
+			Expect(actualCluster).To(Equal(kindCluster))
 		})
 
 		When("getting the control plane endpoint fails", func() {
@@ -249,6 +299,15 @@ var _ = Describe("KindclusterController", func() {
 
 			It("requeues the event", func() {
 				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
+			})
+
+			It("does not update the status to ready", func() {
+				Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
+				actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
+				Expect(actualContext).To(Equal(ctx))
+				Expect(actualStatus.Ready).To(BeFalse())
+				Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhaseProvisioned))
+				Expect(actualCluster).To(Equal(kindCluster))
 			})
 		})
 
@@ -260,15 +319,66 @@ var _ = Describe("KindclusterController", func() {
 			It("requeues the event", func() {
 				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
 			})
+
+			It("does not update the status to ready", func() {
+				Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
+				actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
+				Expect(actualContext).To(Equal(ctx))
+				Expect(actualStatus.Ready).To(BeFalse())
+				Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhaseProvisioned))
+				Expect(actualCluster).To(Equal(kindCluster))
+			})
+		})
+	})
+
+	Describe("Phase Ready", func() {
+		BeforeEach(func() {
+			kindCluster.Status.Ready = true
+			kindCluster.Status.Phase = kclusterv1.ClusterPhaseReady
+			kindClusterClient.GetReturns(kindCluster, nil)
+			clusterProvider.ExistsReturns(true, nil)
 		})
 
-		When("setting the ready status fails", func() {
+		It("reconciles successfully", func() {
+			Expect(reconcileErr).NotTo(HaveOccurred())
+			Expect(result.Requeue).To(BeFalse())
+			Expect(result.Requeue).To(BeTrue())
+		})
+
+		It("should not try to create the cluster", func() {
+			Expect(clusterProvider.CreateCallCount()).To(Equal(0))
+		})
+
+		It("does not update the status", func() {
+			Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
+			actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
+			Expect(actualContext).To(Equal(ctx))
+			Expect(actualStatus.Ready).To(BeTrue())
+			Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhaseReady))
+			Expect(actualCluster).To(Equal(kindCluster))
+		})
+
+		When("the cluster doesn't exist", func() {
 			BeforeEach(func() {
-				kindClusterClient.UpdateStatusReturnsOnCall(1, errors.New("boom"))
+				clusterProvider.ExistsReturns(false, nil)
+			})
+
+			It("updates the status to pending", func() {
+				Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
+				actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
+				Expect(actualContext).To(Equal(ctx))
+				Expect(actualStatus.Ready).To(BeFalse())
+				Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhasePending))
+				Expect(actualCluster).To(Equal(kindCluster))
+			})
+		})
+
+		When("checking if the cluster exists fails", func() {
+			BeforeEach(func() {
+				clusterProvider.ExistsReturns(false, errors.New("boom"))
 			})
 
 			It("requeues the event", func() {
-				Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(2))
 				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
 			})
 		})
@@ -287,6 +397,27 @@ var _ = Describe("KindclusterController", func() {
 
 		It("removes the finalizer", func() {
 			Expect(kindClusterClient.RemoveFinalizerCallCount()).To(Equal(1))
+		})
+
+		It("updates the status to deleted", func() {
+			Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
+			actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
+			Expect(actualContext).To(Equal(ctx))
+			Expect(actualStatus.Ready).To(BeFalse())
+			Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhaseDeleting))
+			Expect(actualCluster).To(Equal(kindCluster))
+		})
+
+		When("updating the status fails", func() {
+			BeforeEach(func() {
+				kindClusterClient.UpdateStatusReturns(errors.New("boom"))
+			})
+
+			It("reconciles successfully", func() {
+				Expect(reconcileErr).NotTo(HaveOccurred())
+				Expect(result.Requeue).To(BeFalse())
+				Expect(result.RequeueAfter).To(BeZero())
+			})
 		})
 
 		When("the KindCluster is not owned by a Cluster", func() {

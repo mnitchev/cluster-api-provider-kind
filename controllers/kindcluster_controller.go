@@ -108,10 +108,20 @@ func (r *KindClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return r.reconcileDeletion(ctx, logger, kindCluster)
 	}
 
+	if kindCluster.Status.Phase == kclusterv1.ClusterPhaseProvisioning {
+		logger.Info("cluster still creating - skipping event")
+		return ctrl.Result{Requeue: true}, nil
+	}
 	return r.reconcileNormal(ctx, logger, kindCluster)
 }
 
 func (r *KindClusterReconciler) reconcileDeletion(ctx context.Context, logger logr.Logger, kindCluster *kclusterv1.KindCluster) (ctrl.Result, error) {
+	status := &kclusterv1.KindClusterStatus{
+		Ready: false,
+		Phase: kclusterv1.ClusterPhaseDeleting,
+	}
+	r.updateStatus(logger, status, kindCluster)
+
 	err := r.clusterProvider.Delete(kindCluster.Spec.Name)
 	if err != nil {
 		logger.Error(err, "failed to delete kind cluster")
@@ -128,66 +138,88 @@ func (r *KindClusterReconciler) reconcileDeletion(ctx context.Context, logger lo
 }
 
 func (r *KindClusterReconciler) reconcileNormal(ctx context.Context, logger logr.Logger, kindCluster *kclusterv1.KindCluster) (ctrl.Result, error) {
+	status := &kclusterv1.KindClusterStatus{
+		Ready: kindCluster.Status.Ready,
+		Phase: kindCluster.Status.Phase,
+	}
+	defer r.updateStatus(logger, status, kindCluster)
+
 	exists, err := r.clusterProvider.Exists(kindCluster.Spec.Name)
 	if err != nil {
 		logger.Error(err, "failed to check if kind cluster exists")
 		return ctrl.Result{}, err
 	}
 
-	if exists {
+	if !exists && kindCluster.Status.Phase != kclusterv1.ClusterPhaseProvisioning {
+		logger.Info("cluster does not exist")
+		status.Ready = false
+		status.Phase = kclusterv1.ClusterPhasePending
+	}
+
+	if kindCluster.Status.Phase == kclusterv1.ClusterPhaseProvisioned {
+		logger.Info("cluster created")
+		err = r.setControlPlaneEndpoint(ctx, logger, kindCluster)
+		if err != nil {
+			logger.Error(err, "failed to set control plane endpoint")
+			return ctrl.Result{}, err
+		}
+
+		status.Ready = true
+		status.Phase = kclusterv1.ClusterPhaseReady
+
 		return ctrl.Result{}, nil
 	}
 
-	logger.Info("cluster does not exist - setting ready to false")
-	err = r.kindClusters.AddFinalizer(ctx, kindCluster)
-	if err != nil {
-		logger.Error(err, "failed to add finalizer")
-		return ctrl.Result{}, err
+	if kindCluster.Status.Phase == kclusterv1.ClusterPhasePending {
+		err := r.kindClusters.AddFinalizer(ctx, kindCluster)
+		if err != nil {
+			logger.Error(err, "failed to add finalizer")
+			return ctrl.Result{}, err
+		}
+
+		status.Ready = false
+		status.Phase = kclusterv1.ClusterPhaseProvisioning
+
+		go r.createCluster(logger, kindCluster)
+		return ctrl.Result{Requeue: true}, nil
 	}
 
-	err = r.updateReadyStatus(ctx, logger, false, kindCluster)
-	if err != nil {
-		logger.Error(err, "failed to set ready status to false")
-		return ctrl.Result{}, err
-	}
+	return ctrl.Result{}, nil
+}
 
-	err = r.clusterProvider.Create(kindCluster.Spec.Name)
+func (r *KindClusterReconciler) createCluster(logger logr.Logger, kindCluster *kclusterv1.KindCluster) {
+	status := &kclusterv1.KindClusterStatus{
+		Ready: false,
+		Phase: kclusterv1.ClusterPhaseProvisioned,
+	}
+	defer r.updateStatus(logger, status, kindCluster)
+
+	err := r.clusterProvider.Create(kindCluster.Spec.Name)
 	if err != nil {
+		status.Phase = kclusterv1.ClusterPhasePending
 		logger.Error(err, "failed to create cluster")
-		return ctrl.Result{}, err
+		return
 	}
 
 	logger.Info("cluster created")
+}
 
+func (r *KindClusterReconciler) updateStatus(logger logr.Logger, status *kclusterv1.KindClusterStatus, kindCluster *kclusterv1.KindCluster) {
+	err := r.kindClusters.UpdateStatus(context.Background(), *status, kindCluster)
+	if err != nil {
+		logger.Error(err, "failed to update status")
+	}
+}
+
+func (r *KindClusterReconciler) setControlPlaneEndpoint(ctx context.Context, logger logr.Logger, kindCluster *kclusterv1.KindCluster) error {
 	host, port, err := r.clusterProvider.GetControlPlaneEndpoint(kindCluster.Spec.Name)
 	if err != nil {
-		logger.Error(err, "failed to get control plane endpoint")
-		return ctrl.Result{}, err
+		return err
 	}
 
 	endpoint := kclusterv1.APIEndpoint{
 		Host: host,
 		Port: port,
 	}
-	err = r.kindClusters.SetControlPlaneEndpoint(ctx, endpoint, kindCluster)
-	if err != nil {
-		logger.Error(err, "failed to set control plane endpoint")
-		return ctrl.Result{}, err
-	}
-
-	err = r.updateReadyStatus(ctx, logger, true, kindCluster)
-	if err != nil {
-		logger.Error(err, "failed to set ready status to true")
-		return ctrl.Result{}, err
-	}
-
-	return ctrl.Result{}, nil
-}
-
-func (r *KindClusterReconciler) updateReadyStatus(ctx context.Context, logger logr.Logger, ready bool, kindCluster *kclusterv1.KindCluster) error {
-	status := kclusterv1.KindClusterStatus{
-		Ready: ready,
-	}
-
-	return r.kindClusters.UpdateStatus(ctx, status, kindCluster)
+	return r.kindClusters.SetControlPlaneEndpoint(ctx, endpoint, kindCluster)
 }

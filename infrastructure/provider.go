@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/kind/pkg/cluster"
 )
 
-const defaultWaitTime = 5 * time.Minute
+const defaultWaitTime = 10 * time.Minute
 
 type KindProvider struct {
 	kubeconfigPath  string

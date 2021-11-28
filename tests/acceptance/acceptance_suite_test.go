@@ -2,6 +2,7 @@ package acceptance_test
 
 import (
 	"testing"
+	"time"
 
 	kclusterv1 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
 	. "github.com/onsi/ginkgo"
@@ -20,6 +21,8 @@ func TestAcceptance(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
+	SetDefaultEventuallyTimeout(5 * time.Minute)
+
 	config, err := controllerruntime.GetConfig()
 	Expect(err).NotTo(HaveOccurred())
 
