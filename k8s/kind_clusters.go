@@ -43,6 +43,12 @@ func (c *KindClusters) RemoveFinalizer(ctx context.Context, cluster *kclusterv1.
 	return c.runtimeClient.Patch(ctx, cluster, client.MergeFrom(originalCluster))
 }
 
+func (c *KindClusters) SetControlPlaneEndpoint(ctx context.Context, endpoint kclusterv1.APIEndpoint, cluster *kclusterv1.KindCluster) error {
+	originalCluster := cluster.DeepCopy()
+	cluster.Spec.ControlPlaneEndpoint = endpoint
+	return c.runtimeClient.Patch(ctx, cluster, client.MergeFrom(originalCluster))
+}
+
 func (c *KindClusters) UpdateStatus(ctx context.Context, status kclusterv1.KindClusterStatus, cluster *kclusterv1.KindCluster) error {
 	originalCluster := cluster.DeepCopy()
 	cluster.Status = status

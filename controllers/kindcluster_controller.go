@@ -42,12 +42,14 @@ type ClusterProvider interface {
 	Create(string) error
 	Exists(string) (bool, error)
 	Delete(string) error
+	GetControlPlaneEndpoint(string) (string, int, error)
 }
 
 type KindClusterClient interface {
 	Get(context.Context, types.NamespacedName) (*kclusterv1.KindCluster, error)
 	AddFinalizer(context.Context, *kclusterv1.KindCluster) error
 	RemoveFinalizer(context.Context, *kclusterv1.KindCluster) error
+	SetControlPlaneEndpoint(context.Context, kclusterv1.APIEndpoint, *kclusterv1.KindCluster) error
 	UpdateStatus(context.Context, kclusterv1.KindClusterStatus, *kclusterv1.KindCluster) error
 }
 
@@ -155,7 +157,24 @@ func (r *KindClusterReconciler) reconcileNormal(ctx context.Context, logger logr
 		return ctrl.Result{}, err
 	}
 
-	logger.Info("cluster created - setting ready to true")
+	logger.Info("cluster created")
+
+	host, port, err := r.clusterProvider.GetControlPlaneEndpoint(kindCluster.Spec.Name)
+	if err != nil {
+		logger.Error(err, "failed to get control plane endpoint")
+		return ctrl.Result{}, err
+	}
+
+	endpoint := kclusterv1.APIEndpoint{
+		Host: host,
+		Port: port,
+	}
+	err = r.kindClusters.SetControlPlaneEndpoint(ctx, endpoint, kindCluster)
+	if err != nil {
+		logger.Error(err, "failed to set control plane endpoint")
+		return ctrl.Result{}, err
+	}
+
 	err = r.updateReadyStatus(ctx, logger, true, kindCluster)
 	if err != nil {
 		logger.Error(err, "failed to set ready status to true")

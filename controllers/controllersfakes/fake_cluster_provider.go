@@ -43,6 +43,21 @@ type FakeClusterProvider struct {
 		result1 bool
 		result2 error
 	}
+	GetControlPlaneEndpointStub        func(string) (string, int, error)
+	getControlPlaneEndpointMutex       sync.RWMutex
+	getControlPlaneEndpointArgsForCall []struct {
+		arg1 string
+	}
+	getControlPlaneEndpointReturns struct {
+		result1 string
+		result2 int
+		result3 error
+	}
+	getControlPlaneEndpointReturnsOnCall map[int]struct {
+		result1 string
+		result2 int
+		result3 error
+	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
@@ -233,6 +248,73 @@ func (fake *FakeClusterProvider) ExistsReturnsOnCall(i int, result1 bool, result
 	}{result1, result2}
 }
 
+func (fake *FakeClusterProvider) GetControlPlaneEndpoint(arg1 string) (string, int, error) {
+	fake.getControlPlaneEndpointMutex.Lock()
+	ret, specificReturn := fake.getControlPlaneEndpointReturnsOnCall[len(fake.getControlPlaneEndpointArgsForCall)]
+	fake.getControlPlaneEndpointArgsForCall = append(fake.getControlPlaneEndpointArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	stub := fake.GetControlPlaneEndpointStub
+	fakeReturns := fake.getControlPlaneEndpointReturns
+	fake.recordInvocation("GetControlPlaneEndpoint", []interface{}{arg1})
+	fake.getControlPlaneEndpointMutex.Unlock()
+	if stub != nil {
+		return stub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2, ret.result3
+	}
+	return fakeReturns.result1, fakeReturns.result2, fakeReturns.result3
+}
+
+func (fake *FakeClusterProvider) GetControlPlaneEndpointCallCount() int {
+	fake.getControlPlaneEndpointMutex.RLock()
+	defer fake.getControlPlaneEndpointMutex.RUnlock()
+	return len(fake.getControlPlaneEndpointArgsForCall)
+}
+
+func (fake *FakeClusterProvider) GetControlPlaneEndpointCalls(stub func(string) (string, int, error)) {
+	fake.getControlPlaneEndpointMutex.Lock()
+	defer fake.getControlPlaneEndpointMutex.Unlock()
+	fake.GetControlPlaneEndpointStub = stub
+}
+
+func (fake *FakeClusterProvider) GetControlPlaneEndpointArgsForCall(i int) string {
+	fake.getControlPlaneEndpointMutex.RLock()
+	defer fake.getControlPlaneEndpointMutex.RUnlock()
+	argsForCall := fake.getControlPlaneEndpointArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeClusterProvider) GetControlPlaneEndpointReturns(result1 string, result2 int, result3 error) {
+	fake.getControlPlaneEndpointMutex.Lock()
+	defer fake.getControlPlaneEndpointMutex.Unlock()
+	fake.GetControlPlaneEndpointStub = nil
+	fake.getControlPlaneEndpointReturns = struct {
+		result1 string
+		result2 int
+		result3 error
+	}{result1, result2, result3}
+}
+
+func (fake *FakeClusterProvider) GetControlPlaneEndpointReturnsOnCall(i int, result1 string, result2 int, result3 error) {
+	fake.getControlPlaneEndpointMutex.Lock()
+	defer fake.getControlPlaneEndpointMutex.Unlock()
+	fake.GetControlPlaneEndpointStub = nil
+	if fake.getControlPlaneEndpointReturnsOnCall == nil {
+		fake.getControlPlaneEndpointReturnsOnCall = make(map[int]struct {
+			result1 string
+			result2 int
+			result3 error
+		})
+	}
+	fake.getControlPlaneEndpointReturnsOnCall[i] = struct {
+		result1 string
+		result2 int
+		result3 error
+	}{result1, result2, result3}
+}
+
 func (fake *FakeClusterProvider) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
@@ -242,6 +324,8 @@ func (fake *FakeClusterProvider) Invocations() map[string][][]interface{} {
 	defer fake.deleteMutex.RUnlock()
 	fake.existsMutex.RLock()
 	defer fake.existsMutex.RUnlock()
+	fake.getControlPlaneEndpointMutex.RLock()
+	defer fake.getControlPlaneEndpointMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value

@@ -27,6 +27,17 @@ import (
 type KindClusterSpec struct {
 	//+kubebuilder:validation:Required
 	Name string `json:"name"`
+
+	//+kubebuilder:validation:Optional
+	ControlPlaneEndpoint APIEndpoint `json:"controlPlaneEndpoint"`
+}
+
+type APIEndpoint struct {
+	// Host is the hostname on which the API server is serving.
+	Host string `json:"host"`
+
+	// Port is the port on which the API server is serving.
+	Port int `json:"port"`
 }
 
 // KindClusterStatus defines the observed state of KindCluster

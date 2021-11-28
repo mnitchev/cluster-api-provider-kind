@@ -56,6 +56,7 @@ var _ = Describe("KindclusterController", func() {
 			},
 		}
 		clusterClient.GetReturns(cluster, nil)
+		clusterProvider.GetControlPlaneEndpointReturns("127.0.0.1", 1337, nil)
 	})
 
 	JustBeforeEach(func() {
@@ -117,6 +118,21 @@ var _ = Describe("KindclusterController", func() {
 			actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(1)
 			Expect(actualContext).To(Equal(ctx))
 			Expect(actualStatus.Ready).To(BeTrue())
+			Expect(actualCluster).To(Equal(kindCluster))
+		})
+
+		It("gets the control plane endpoint", func() {
+			Expect(clusterProvider.GetControlPlaneEndpointCallCount()).To(Equal(1))
+			name := clusterProvider.GetControlPlaneEndpointArgsForCall(0)
+			Expect(name).To(Equal("the-kind-cluster-name"))
+		})
+
+		It("sets the control plane endpoint", func() {
+			Expect(kindClusterClient.SetControlPlaneEndpointCallCount()).To(Equal(1))
+			actualContext, actualEndpoint, actualCluster := kindClusterClient.SetControlPlaneEndpointArgsForCall(0)
+			Expect(actualContext).To(Equal(ctx))
+			Expect(actualEndpoint.Host).To(Equal("127.0.0.1"))
+			Expect(actualEndpoint.Port).To(Equal(1337))
 			Expect(actualCluster).To(Equal(kindCluster))
 		})
 
@@ -222,6 +238,26 @@ var _ = Describe("KindclusterController", func() {
 
 			It("requeues the event", func() {
 				Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
+				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
+			})
+		})
+
+		When("getting the control plane endpoint fails", func() {
+			BeforeEach(func() {
+				clusterProvider.GetControlPlaneEndpointReturns("", 0, errors.New("boom"))
+			})
+
+			It("requeues the event", func() {
+				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
+			})
+		})
+
+		When("setting the control plane endpoint fails", func() {
+			BeforeEach(func() {
+				kindClusterClient.SetControlPlaneEndpointReturns(errors.New("boom"))
+			})
+
+			It("requeues the event", func() {
 				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
 			})
 		})

@@ -49,6 +49,19 @@ type FakeKindClusterClient struct {
 	removeFinalizerReturnsOnCall map[int]struct {
 		result1 error
 	}
+	SetControlPlaneEndpointStub        func(context.Context, v1alpha3.APIEndpoint, *v1alpha3.KindCluster) error
+	setControlPlaneEndpointMutex       sync.RWMutex
+	setControlPlaneEndpointArgsForCall []struct {
+		arg1 context.Context
+		arg2 v1alpha3.APIEndpoint
+		arg3 *v1alpha3.KindCluster
+	}
+	setControlPlaneEndpointReturns struct {
+		result1 error
+	}
+	setControlPlaneEndpointReturnsOnCall map[int]struct {
+		result1 error
+	}
 	UpdateStatusStub        func(context.Context, v1alpha3.KindClusterStatus, *v1alpha3.KindCluster) error
 	updateStatusMutex       sync.RWMutex
 	updateStatusArgsForCall []struct {
@@ -255,6 +268,69 @@ func (fake *FakeKindClusterClient) RemoveFinalizerReturnsOnCall(i int, result1 e
 	}{result1}
 }
 
+func (fake *FakeKindClusterClient) SetControlPlaneEndpoint(arg1 context.Context, arg2 v1alpha3.APIEndpoint, arg3 *v1alpha3.KindCluster) error {
+	fake.setControlPlaneEndpointMutex.Lock()
+	ret, specificReturn := fake.setControlPlaneEndpointReturnsOnCall[len(fake.setControlPlaneEndpointArgsForCall)]
+	fake.setControlPlaneEndpointArgsForCall = append(fake.setControlPlaneEndpointArgsForCall, struct {
+		arg1 context.Context
+		arg2 v1alpha3.APIEndpoint
+		arg3 *v1alpha3.KindCluster
+	}{arg1, arg2, arg3})
+	stub := fake.SetControlPlaneEndpointStub
+	fakeReturns := fake.setControlPlaneEndpointReturns
+	fake.recordInvocation("SetControlPlaneEndpoint", []interface{}{arg1, arg2, arg3})
+	fake.setControlPlaneEndpointMutex.Unlock()
+	if stub != nil {
+		return stub(arg1, arg2, arg3)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fakeReturns.result1
+}
+
+func (fake *FakeKindClusterClient) SetControlPlaneEndpointCallCount() int {
+	fake.setControlPlaneEndpointMutex.RLock()
+	defer fake.setControlPlaneEndpointMutex.RUnlock()
+	return len(fake.setControlPlaneEndpointArgsForCall)
+}
+
+func (fake *FakeKindClusterClient) SetControlPlaneEndpointCalls(stub func(context.Context, v1alpha3.APIEndpoint, *v1alpha3.KindCluster) error) {
+	fake.setControlPlaneEndpointMutex.Lock()
+	defer fake.setControlPlaneEndpointMutex.Unlock()
+	fake.SetControlPlaneEndpointStub = stub
+}
+
+func (fake *FakeKindClusterClient) SetControlPlaneEndpointArgsForCall(i int) (context.Context, v1alpha3.APIEndpoint, *v1alpha3.KindCluster) {
+	fake.setControlPlaneEndpointMutex.RLock()
+	defer fake.setControlPlaneEndpointMutex.RUnlock()
+	argsForCall := fake.setControlPlaneEndpointArgsForCall[i]
+	return argsForCall.arg1, argsForCall.arg2, argsForCall.arg3
+}
+
+func (fake *FakeKindClusterClient) SetControlPlaneEndpointReturns(result1 error) {
+	fake.setControlPlaneEndpointMutex.Lock()
+	defer fake.setControlPlaneEndpointMutex.Unlock()
+	fake.SetControlPlaneEndpointStub = nil
+	fake.setControlPlaneEndpointReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeKindClusterClient) SetControlPlaneEndpointReturnsOnCall(i int, result1 error) {
+	fake.setControlPlaneEndpointMutex.Lock()
+	defer fake.setControlPlaneEndpointMutex.Unlock()
+	fake.SetControlPlaneEndpointStub = nil
+	if fake.setControlPlaneEndpointReturnsOnCall == nil {
+		fake.setControlPlaneEndpointReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.setControlPlaneEndpointReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
 func (fake *FakeKindClusterClient) UpdateStatus(arg1 context.Context, arg2 v1alpha3.KindClusterStatus, arg3 *v1alpha3.KindCluster) error {
 	fake.updateStatusMutex.Lock()
 	ret, specificReturn := fake.updateStatusReturnsOnCall[len(fake.updateStatusArgsForCall)]
@@ -327,6 +403,8 @@ func (fake *FakeKindClusterClient) Invocations() map[string][][]interface{} {
 	defer fake.getMutex.RUnlock()
 	fake.removeFinalizerMutex.RLock()
 	defer fake.removeFinalizerMutex.RUnlock()
+	fake.setControlPlaneEndpointMutex.RLock()
+	defer fake.setControlPlaneEndpointMutex.RUnlock()
 	fake.updateStatusMutex.RLock()
 	defer fake.updateStatusMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}

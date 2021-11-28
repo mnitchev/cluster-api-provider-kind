@@ -40,6 +40,18 @@ spec:
           spec:
             description: KindClusterSpec defines the desired state of KindCluster
             properties:
+              controlPlaneEndpoint:
+                properties:
+                  host:
+                    description: Host is the hostname on which the API server is serving.
+                    type: string
+                  port:
+                    description: Port is the port on which the API server is serving.
+                    type: integer
+                required:
+                - host
+                - port
+                type: object
               name:
                 type: string
             required:

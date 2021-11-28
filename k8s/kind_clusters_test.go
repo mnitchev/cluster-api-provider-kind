@@ -38,6 +38,9 @@ var _ = Describe("KindClusters", func() {
 				Name: "the-kind-cluster-name",
 			},
 		}
+	})
+
+	JustBeforeEach(func() {
 		Expect(k8sClient.Create(ctx, kindCluster)).To(Succeed())
 	})
 
@@ -100,6 +103,50 @@ var _ = Describe("KindClusters", func() {
 					err = kindClusters.RemoveFinalizer(ctx, kindCluster)
 					Expect(err).NotTo(HaveOccurred())
 				})
+			})
+		})
+	})
+
+	Describe("AddControlPlaneEndpoint", func() {
+		var endpoint kclusterv1.APIEndpoint
+		BeforeEach(func() {
+			endpoint = kclusterv1.APIEndpoint{
+				Host: "127.0.0.1",
+				Port: 1337,
+			}
+		})
+
+		JustBeforeEach(func() {
+			err := kindClusters.SetControlPlaneEndpoint(ctx, endpoint, kindCluster)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("adds the control plane endpoint", func() {
+			err := k8sClient.Get(ctx, namespacedName, kindCluster)
+			Expect(err).NotTo(HaveOccurred())
+			actualEndpoint := kindCluster.Spec.ControlPlaneEndpoint
+			Expect(actualEndpoint.Host).To(Equal("127.0.0.1"))
+			Expect(actualEndpoint.Port).To(Equal(1337))
+		})
+
+		When("the endpoint is already set", func() {
+			BeforeEach(func() {
+				existingEndpoint := kclusterv1.APIEndpoint{
+					Host: "127.0.0.1",
+					Port: 1337,
+				}
+				kindCluster.Spec.ControlPlaneEndpoint = existingEndpoint
+
+				endpoint.Host = "172.0.0.1"
+				endpoint.Port = 8080
+			})
+
+			It("overrides it", func() {
+				err := k8sClient.Get(ctx, namespacedName, kindCluster)
+				Expect(err).NotTo(HaveOccurred())
+				actualEndpoint := kindCluster.Spec.ControlPlaneEndpoint
+				Expect(actualEndpoint.Host).To(Equal("172.0.0.1"))
+				Expect(actualEndpoint.Port).To(Equal(8080))
 			})
 		})
 	})

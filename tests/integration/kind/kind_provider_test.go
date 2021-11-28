@@ -100,6 +100,24 @@ var _ = Describe("KindProvider", func() {
 		})
 	})
 
+	Describe("GetControlPlaneEndpoint", func() {
+		BeforeEach(func() {
+			err := kindProvider.Create(name)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		AfterEach(func() {
+			Expect(clusterProvider.Delete(name, kubeconfig)).To(Succeed())
+		})
+
+		It("gets the endpoint", func() {
+			host, port, err := kindProvider.GetControlPlaneEndpoint(name)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(host).To(Equal("127.0.0.1"))
+			Expect(port).To(BeNumerically(">", 1024))
+		})
+	})
+
 	When("the docker binary is missing from the PATH", func() {
 		DescribeTable("operations return an error",
 			func(operation func() error) {
