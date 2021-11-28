@@ -20,7 +20,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg/mod \
     CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o manager main.go
 
-FROM gcr.io/distroless/static:nonroot
+FROM gcr.io/distroless/static:latest
 WORKDIR /
 COPY --from=builder /workspace/manager .
 COPY --from=builder /workspace/docker/docker /usr/bin/docker
