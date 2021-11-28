@@ -156,6 +156,20 @@ func (r *KindClusterReconciler) reconcileNormal(ctx context.Context, logger logr
 		status.Phase = kclusterv1.ClusterPhasePending
 	}
 
+	if exists && pendingCluster(kindCluster.Status.Phase) {
+		logger.Info("adopting existing cluster")
+		err := r.kindClusters.AddFinalizer(ctx, kindCluster)
+		if err != nil {
+			logger.Error(err, "failed to add finalizer")
+			return ctrl.Result{}, err
+		}
+
+		status.Ready = false
+		status.Phase = kclusterv1.ClusterPhaseProvisioned
+
+		return ctrl.Result{}, nil
+	}
+
 	if kindCluster.Status.Phase == kclusterv1.ClusterPhaseProvisioned {
 		logger.Info("cluster created")
 		err = r.setControlPlaneEndpoint(ctx, logger, kindCluster)
@@ -222,4 +236,8 @@ func (r *KindClusterReconciler) setControlPlaneEndpoint(ctx context.Context, log
 		Port: port,
 	}
 	return r.kindClusters.SetControlPlaneEndpoint(ctx, endpoint, kindCluster)
+}
+
+func pendingCluster(phase kclusterv1.ClusterPhase) bool {
+	return phase == "" || phase == kclusterv1.ClusterPhasePending
 }

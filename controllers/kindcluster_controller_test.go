@@ -101,6 +101,27 @@ var _ = Describe("KindclusterController", func() {
 		Expect(actualCluster).To(Equal(kindCluster))
 	})
 
+	When("the real kind cluster already exists", func() {
+		BeforeEach(func() {
+			clusterProvider.ExistsReturns(true, nil)
+		})
+
+		It("adopts the cluster by setting the status to provisioned", func() {
+			Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
+			actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
+			Expect(actualContext).To(Equal(ctx))
+			Expect(actualStatus.Ready).To(BeFalse())
+			Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhaseProvisioned))
+			Expect(actualCluster).To(Equal(kindCluster))
+		})
+
+		It("registers the finalizer", func() {
+			Expect(kindClusterClient.AddFinalizerCallCount()).To(Equal(1))
+			_, actualCluster := kindClusterClient.AddFinalizerArgsForCall(0)
+			Expect(actualCluster).To(Equal(kindCluster))
+		})
+	})
+
 	When("getting the kind cluster fails", func() {
 		BeforeEach(func() {
 			kindClusterClient.GetReturns(nil, errors.New("boom"))
@@ -191,6 +212,27 @@ var _ = Describe("KindclusterController", func() {
 			Expect(actualStatus.Ready).To(BeFalse())
 			Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhaseProvisioned))
 			Expect(actualCluster).To(Equal(kindCluster))
+		})
+
+		When("the real kind cluster already exists", func() {
+			BeforeEach(func() {
+				clusterProvider.ExistsReturns(true, nil)
+			})
+
+			It("adopts the cluster by setting the status to provisioned", func() {
+				Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
+				actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
+				Expect(actualContext).To(Equal(ctx))
+				Expect(actualStatus.Ready).To(BeFalse())
+				Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhaseProvisioned))
+				Expect(actualCluster).To(Equal(kindCluster))
+			})
+
+			It("registers the finalizer", func() {
+				Expect(kindClusterClient.AddFinalizerCallCount()).To(Equal(1))
+				_, actualCluster := kindClusterClient.AddFinalizerArgsForCall(0)
+				Expect(actualCluster).To(Equal(kindCluster))
+			})
 		})
 
 		When("adding the finalizer fails", func() {
@@ -342,7 +384,6 @@ var _ = Describe("KindclusterController", func() {
 		It("reconciles successfully", func() {
 			Expect(reconcileErr).NotTo(HaveOccurred())
 			Expect(result.Requeue).To(BeFalse())
-			Expect(result.Requeue).To(BeTrue())
 		})
 
 		It("should not try to create the cluster", func() {
