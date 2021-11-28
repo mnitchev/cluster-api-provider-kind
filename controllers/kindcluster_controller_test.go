@@ -10,7 +10,9 @@ import (
 	"github.com/mnitchev/cluster-api-provider-kind/controllers/controllersfakes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -90,6 +92,14 @@ var _ = Describe("KindclusterController", func() {
 			Expect(actualKindCluster).To(Equal(kindCluster))
 		})
 
+		It("updates the status to not ready before creating the cluster", func() {
+			Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(2))
+			actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
+			Expect(actualContext).To(Equal(ctx))
+			Expect(actualStatus.Ready).To(BeFalse())
+			Expect(actualCluster).To(Equal(kindCluster))
+		})
+
 		It("creates a cluster using the cluster provider", func() {
 			Expect(clusterProvider.CreateCallCount()).To(Equal(1))
 			name := clusterProvider.CreateArgsForCall(0)
@@ -103,8 +113,8 @@ var _ = Describe("KindclusterController", func() {
 		})
 
 		It("updates the status to ready", func() {
-			Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
-			actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
+			Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(2))
+			actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(1)
 			Expect(actualContext).To(Equal(ctx))
 			Expect(actualStatus.Ready).To(BeTrue())
 			Expect(actualCluster).To(Equal(kindCluster))
@@ -123,6 +133,16 @@ var _ = Describe("KindclusterController", func() {
 			It("does not create the cluster", func() {
 				Expect(clusterProvider.CreateCallCount()).To(Equal(0))
 				Expect(kindClusterClient.AddFinalizerCallCount()).To(Equal(0))
+			})
+		})
+
+		When("getting the owner cluster fails", func() {
+			BeforeEach(func() {
+				clusterClient.GetReturns(nil, errors.New("boom"))
+			})
+
+			It("reqturns an error", func() {
+				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
 			})
 		})
 
@@ -173,6 +193,16 @@ var _ = Describe("KindclusterController", func() {
 			It("requeues the event", func() {
 				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
 			})
+
+			When("the kind cluster does not exist", func() {
+				BeforeEach(func() {
+					kindClusterClient.GetReturns(nil, k8serrors.NewNotFound(schema.GroupResource{}, "foo"))
+				})
+				It("does not requeue the event", func() {
+					Expect(reconcileErr).NotTo(HaveOccurred())
+					Expect(result.Requeue).To(BeFalse())
+				})
+			})
 		})
 
 		When("creating the cluster fails", func() {
@@ -185,12 +215,24 @@ var _ = Describe("KindclusterController", func() {
 			})
 		})
 
-		When("setting the status fails", func() {
+		When("setting the not ready status fails", func() {
 			BeforeEach(func() {
 				kindClusterClient.UpdateStatusReturns(errors.New("boom"))
 			})
 
 			It("requeues the event", func() {
+				Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
+				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
+			})
+		})
+
+		When("setting the ready status fails", func() {
+			BeforeEach(func() {
+				kindClusterClient.UpdateStatusReturnsOnCall(1, errors.New("boom"))
+			})
+
+			It("requeues the event", func() {
+				Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(2))
 				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
 			})
 		})
@@ -226,6 +268,7 @@ var _ = Describe("KindclusterController", func() {
 				Expect(kindClusterClient.RemoveFinalizerCallCount()).To(Equal(0))
 			})
 		})
+
 		When("removing the finalizer fails", func() {
 			BeforeEach(func() {
 				kindClusterClient.RemoveFinalizerReturns(errors.New("boom"))

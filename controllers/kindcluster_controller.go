@@ -25,6 +25,7 @@ import (
 
 	"github.com/go-logr/logr"
 	kclusterv1 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
@@ -81,12 +82,21 @@ func (r *KindClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	logger = logger.WithValues("name", req.Name, "namespace", req.Namespace)
 
 	kindCluster, err := r.kindClusters.Get(ctx, req.NamespacedName)
+	if k8serrors.IsNotFound(err) {
+		logger.Info("KindCluster no longer exists")
+		return ctrl.Result{}, nil
+	}
 	if err != nil {
 		logger.Error(err, "failed to get KindCluster")
 		return ctrl.Result{}, err
 	}
 
-	cluster, _ := r.clusters.Get(ctx, kindCluster)
+	cluster, err := r.clusters.Get(ctx, kindCluster)
+	if err != nil {
+		logger.Error(err, "failed to get owner cluster")
+		return ctrl.Result{}, err
+	}
+
 	if cluster == nil {
 		logger.Info("KindCluster not owned by Cluster yet")
 		return ctrl.Result{}, nil
@@ -126,9 +136,16 @@ func (r *KindClusterReconciler) reconcileNormal(ctx context.Context, logger logr
 		return ctrl.Result{}, nil
 	}
 
+	logger.Info("cluster does not exist - setting ready to false")
 	err = r.kindClusters.AddFinalizer(ctx, kindCluster)
 	if err != nil {
 		logger.Error(err, "failed to add finalizer")
+		return ctrl.Result{}, err
+	}
+
+	err = r.updateReadyStatus(ctx, logger, false, kindCluster)
+	if err != nil {
+		logger.Error(err, "failed to set ready status to false")
 		return ctrl.Result{}, err
 	}
 
@@ -138,19 +155,20 @@ func (r *KindClusterReconciler) reconcileNormal(ctx context.Context, logger logr
 		return ctrl.Result{}, err
 	}
 
-	return r.updateStatus(ctx, logger, kindCluster)
-}
-
-func (r *KindClusterReconciler) updateStatus(ctx context.Context, logger logr.Logger, kindCluster *kclusterv1.KindCluster) (ctrl.Result, error) {
-	status := kclusterv1.KindClusterStatus{
-		Ready: true,
-	}
-
-	err := r.kindClusters.UpdateStatus(ctx, status, kindCluster)
+	logger.Info("cluster created - setting ready to true")
+	err = r.updateReadyStatus(ctx, logger, true, kindCluster)
 	if err != nil {
-		logger.Error(err, "failed to update status")
+		logger.Error(err, "failed to set ready status to true")
 		return ctrl.Result{}, err
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *KindClusterReconciler) updateReadyStatus(ctx context.Context, logger logr.Logger, ready bool, kindCluster *kclusterv1.KindCluster) error {
+	status := kclusterv1.KindClusterStatus{
+		Ready: ready,
+	}
+
+	return r.kindClusters.UpdateStatus(ctx, status, kindCluster)
 }
