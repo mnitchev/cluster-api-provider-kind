@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"errors"
 
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -157,17 +158,12 @@ func (r *KindClusterReconciler) reconcileNormal(ctx context.Context, logger logr
 	}
 
 	if exists && pendingCluster(kindCluster.Status.Phase) {
-		logger.Info("adopting existing cluster")
-		err := r.kindClusters.AddFinalizer(ctx, kindCluster)
-		if err != nil {
-			logger.Error(err, "failed to add finalizer")
-			return ctrl.Result{}, err
-		}
-
+		existsErr := errors.New("cluster already exists")
+		logger.Error(existsErr, "failed to reconcile")
 		status.Ready = false
-		status.Phase = kclusterv1.ClusterPhaseProvisioned
+		status.Phase = kclusterv1.ClusterPhasePending
 
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, existsErr
 	}
 
 	if kindCluster.Status.Phase == kclusterv1.ClusterPhaseProvisioned {

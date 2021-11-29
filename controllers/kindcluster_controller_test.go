@@ -106,18 +106,16 @@ var _ = Describe("KindclusterController", func() {
 			clusterProvider.ExistsReturns(true, nil)
 		})
 
-		It("adopts the cluster by setting the status to provisioned", func() {
+		It("reqturns an error", func() {
+			Expect(reconcileErr).To(MatchError(ContainSubstring("cluster already exists")))
+		})
+
+		It(" the cluster by setting the status to provisioned", func() {
 			Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
 			actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
 			Expect(actualContext).To(Equal(ctx))
 			Expect(actualStatus.Ready).To(BeFalse())
-			Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhaseProvisioned))
-			Expect(actualCluster).To(Equal(kindCluster))
-		})
-
-		It("registers the finalizer", func() {
-			Expect(kindClusterClient.AddFinalizerCallCount()).To(Equal(1))
-			_, actualCluster := kindClusterClient.AddFinalizerArgsForCall(0)
+			Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhasePending))
 			Expect(actualCluster).To(Equal(kindCluster))
 		})
 	})
@@ -219,18 +217,16 @@ var _ = Describe("KindclusterController", func() {
 				clusterProvider.ExistsReturns(true, nil)
 			})
 
-			It("adopts the cluster by setting the status to provisioned", func() {
+			It("reqturns an error", func() {
+				Expect(reconcileErr).To(MatchError(ContainSubstring("cluster already exists")))
+			})
+
+			It(" the cluster by setting the status to provisioned", func() {
 				Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
 				actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
 				Expect(actualContext).To(Equal(ctx))
 				Expect(actualStatus.Ready).To(BeFalse())
-				Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhaseProvisioned))
-				Expect(actualCluster).To(Equal(kindCluster))
-			})
-
-			It("registers the finalizer", func() {
-				Expect(kindClusterClient.AddFinalizerCallCount()).To(Equal(1))
-				_, actualCluster := kindClusterClient.AddFinalizerArgsForCall(0)
+				Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhasePending))
 				Expect(actualCluster).To(Equal(kindCluster))
 			})
 		})
