@@ -9,6 +9,7 @@ To install a management cluster named `management-cluster` simply run:
 make deploy-management-cluster
 ```
 If you wish to name your cluster something different export or add the `CLUSTER` environment variable.
+
 To create a cluster apply (optionally modify) the `tests/assets/clusters.yaml` file:
 ```shell
 kubectl apply -f tests/assets/clusters.yaml
