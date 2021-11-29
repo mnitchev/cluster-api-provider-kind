@@ -32,9 +32,15 @@ const (
 
 // KindClusterSpec defines the desired state of KindCluster
 type KindClusterSpec struct {
+	// Name is the name with which the actual kind cluster will be created. If
+	// the name already exists the KindCluster will stay in the Pending phase
+	// until the cluster is removed
 	//+kubebuilder:validation:Required
 	Name string `json:"name"`
 
+	// ControlPlaneEndpoint is the host and port at which the cluster is
+	// reachable. It will be set by the controller after the cluster has
+	// reached the Created phase.
 	//+kubebuilder:validation:Optional
 	ControlPlaneEndpoint APIEndpoint `json:"controlPlaneEndpoint"`
 }
@@ -49,8 +55,12 @@ type APIEndpoint struct {
 
 // KindClusterStatus defines the observed state of KindCluster
 type KindClusterStatus struct {
+	// Ready indicates if the cluster's control plane is running and ready to
+	// be used
 	//+kubebuilder:validation:Optional
+	//+kubebuilder:default=false
 	Ready bool `json:"ready"`
+	// Phase indicates which phase the cluster creation is in
 	//+kubebuilder:validation:Optional
 	Phase ClusterPhase `json:"phase"`
 }
