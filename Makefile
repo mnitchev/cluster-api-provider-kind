@@ -1,6 +1,7 @@
 
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
+CLUSTER ?= acceptance
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.22
 
@@ -58,8 +59,8 @@ vet: ## Run go vet against code.
 lint:
 	golangci-lint run -v
 
-create-acceptance-cluster:
-	IMAGE=$(IMG) ./scripts/create-acceptance-cluster.sh
+create-management-cluster:
+	CLUSTER=$(CLUSTER) IMAGE=$(IMG) ./scripts/create-management-cluster.sh
 
 .PHONY: test
 test: manifests generate fmt vet envtest ## Run tests.
@@ -68,7 +69,7 @@ test: manifests generate fmt vet envtest ## Run tests.
 test-integration: manifests generate fmt vet ## Run tests.
 	./scripts/run-integration-tests.sh
 
-deploy-acceptance: docker-build create-acceptance-cluster deploy
+deploy-management-cluster: docker-build create-management-cluster deploy
 
 test-acceptance: deploy-acceptance
 	KUBECONFIG="$(HOME)/.kube/acceptance.yml" ginkgo -r -randomizeAllSpecs --randomizeSuites tests/acceptance

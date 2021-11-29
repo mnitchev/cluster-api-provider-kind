@@ -11,11 +11,7 @@ ensure_kind_cluster() {
   local cluster
   cluster="$1"
   if ! kind get clusters | grep -q "$cluster"; then
-    current_cluster="$(kubectl config current-context)" || true
     kind create cluster --name "$cluster" --wait 5m --config "${REPO_ROOT}/tests/assets/kind-cluster-with-docker-sock-mount.yaml"
-    if [[ -n "$current_cluster" ]]; then
-      kubectl config use-context "$current_cluster"
-    fi
   fi
   kind export kubeconfig --name "$cluster" --kubeconfig "$HOME/.kube/$cluster.yml"
 }
