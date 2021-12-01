@@ -27,7 +27,7 @@ var _ = Describe("KindClusters", func() {
 
 		namespacedName = types.NamespacedName{
 			Name:      "potato",
-			Namespace: "default",
+			Namespace: namespace,
 		}
 		kindCluster = &kclusterv1.KindCluster{
 			ObjectMeta: metav1.ObjectMeta{
@@ -57,7 +57,7 @@ var _ = Describe("KindClusters", func() {
 
 		When("the cluster does not exist", func() {
 			It("returns a not found error", func() {
-				actualCluster, err := kindClusters.Get(ctx, types.NamespacedName{Name: "carrot", Namespace: "default"})
+				actualCluster, err := kindClusters.Get(ctx, types.NamespacedName{Name: "carrot", Namespace: namespace})
 				Expect(errors.IsNotFound(err)).To(BeTrue())
 				Expect(actualCluster).To(BeNil())
 			})

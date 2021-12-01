@@ -17,12 +17,17 @@ limitations under the License.
 package k8s_test
 
 import (
+	"context"
+	"go/build"
 	"path/filepath"
 	"testing"
 
+	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
@@ -44,8 +49,10 @@ func TestK8s(t *testing.T) {
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var (
-	k8sClient client.Client
-	testEnv   *envtest.Environment
+	k8sClient    client.Client
+	testEnv      *envtest.Environment
+	namespace    string
+	namespaceObj *corev1.Namespace
 )
 
 var _ = BeforeSuite(func() {
@@ -55,6 +62,7 @@ var _ = BeforeSuite(func() {
 	testEnv = &envtest.Environment{
 		CRDDirectoryPaths: []string{
 			filepath.Join("..", "config", "crd", "bases"),
+			filepath.Join(build.Default.GOPATH, "pkg", "mod", "sigs.k8s.io", "cluster-api@v1.0.1", "config", "crd", "bases"),
 		},
 		ErrorIfCRDPathMissing: true,
 	}
@@ -64,6 +72,9 @@ var _ = BeforeSuite(func() {
 	Expect(cfg).NotTo(BeNil())
 
 	err = kclusterv1.AddToScheme(scheme.Scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = clusterv1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:scheme
@@ -77,4 +88,15 @@ var _ = AfterSuite(func() {
 	By("tearing down the test environment")
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
+})
+
+var _ = BeforeEach(func() {
+	namespace = uuid.New().String()
+	namespaceObj = &corev1.Namespace{}
+	namespaceObj.Name = namespace
+	Expect(k8sClient.Create(context.Background(), namespaceObj)).To(Succeed())
+})
+
+var _ = AfterEach(func() {
+	Expect(k8sClient.Delete(context.Background(), namespaceObj)).To(Succeed())
 })

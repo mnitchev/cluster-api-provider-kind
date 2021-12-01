@@ -2,8 +2,8 @@ package k8s_test
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -29,7 +29,7 @@ var _ = Describe("Clusters", func() {
 		ctx = context.Background()
 		clusters = k8s.NewClusters(k8sClient)
 
-		namespace = fmt.Sprintf("test-%d", GinkgoParallelNode())
+		namespace = uuid.New().String()
 		namespaceObj = &corev1.Namespace{}
 		namespaceObj.Name = namespace
 		Expect(k8sClient.Create(ctx, namespaceObj)).To(Succeed())
@@ -54,6 +54,14 @@ var _ = Describe("Clusters", func() {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "potato",
 				Namespace: namespace,
+				OwnerReferences: []metav1.OwnerReference{
+					{
+						APIVersion: clusterv1.GroupVersion.String(),
+						Kind:       "Cluster",
+						Name:       cluster.Name,
+						UID:        cluster.UID,
+					},
+				},
 			},
 			Spec: kclusterv1.KindClusterSpec{
 				Name: "the-kind-cluster-name",
