@@ -63,11 +63,13 @@ create-management-cluster:
 	CLUSTER=$(CLUSTER) IMAGE=$(IMG) ./scripts/create-management-cluster.sh
 
 .PHONY: test
-test: manifests generate fmt vet envtest ## Run tests.
+test: lint test-unit test-integration test-acceptance ## Run tests.
+
+test-unit: manifests generate fmt vet envtest
 	./scripts/test
 
 test-integration: manifests generate fmt vet ## Run tests.
-	./scripts/run-integration-tests.sh
+	ginkgo -p -r -randomizeAllSpecs --randomizeSuites tests/integration
 
 deploy-management-cluster: docker-build create-management-cluster deploy
 
