@@ -239,10 +239,6 @@ func (r *KindClusterReconciler) setControlPlaneEndpoint(ctx context.Context, log
 	return r.kindClusters.SetControlPlaneEndpoint(ctx, endpoint, kindCluster)
 }
 
-func pendingCluster(phase kclusterv1.ClusterPhase) bool {
-	return phase == "" || phase == kclusterv1.ClusterPhasePending
-}
-
 func createdCluster(phase kclusterv1.ClusterPhase) bool {
 	return phase == kclusterv1.ClusterPhaseProvisioned || phase == kclusterv1.ClusterPhaseReady
 }
