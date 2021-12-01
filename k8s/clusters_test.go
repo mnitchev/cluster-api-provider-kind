@@ -3,7 +3,6 @@ package k8s_test
 import (
 	"context"
 
-	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -17,22 +16,15 @@ import (
 
 var _ = Describe("Clusters", func() {
 	var (
-		clusters     *k8s.Clusters
-		cluster      *clusterv1.Cluster
-		kindCluster  *kclusterv1.KindCluster
-		ctx          context.Context
-		namespace    string
-		namespaceObj *corev1.Namespace
+		clusters    *k8s.Clusters
+		cluster     *clusterv1.Cluster
+		kindCluster *kclusterv1.KindCluster
+		ctx         context.Context
 	)
 
 	BeforeEach(func() {
 		ctx = context.Background()
 		clusters = k8s.NewClusters(k8sClient)
-
-		namespace = uuid.New().String()
-		namespaceObj = &corev1.Namespace{}
-		namespaceObj.Name = namespace
-		Expect(k8sClient.Create(ctx, namespaceObj)).To(Succeed())
 
 		cluster = &clusterv1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
@@ -71,7 +63,6 @@ var _ = Describe("Clusters", func() {
 	})
 
 	AfterEach(func() {
-		Expect(k8sClient.Delete(ctx, namespaceObj)).To(Succeed())
 		Expect(k8sClient.Delete(ctx, cluster)).To(Succeed())
 		Expect(k8sClient.Delete(ctx, kindCluster)).To(Succeed())
 	})
