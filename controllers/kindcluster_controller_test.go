@@ -171,8 +171,8 @@ var _ = Describe("KindclusterController", func() {
 		It("creates a cluster using the cluster provider", func() {
 			// use eventually as the implementation starts a go routine
 			Eventually(clusterProvider.CreateCallCount).Should(Equal(1))
-			name := clusterProvider.CreateArgsForCall(0)
-			Expect(name).To(Equal("the-kind-cluster-name"))
+			actualCluster := clusterProvider.CreateArgsForCall(0)
+			Expect(actualCluster).To(Equal(kindCluster))
 		})
 
 		It("updates the status to provisioned after create finishes", func() {
@@ -280,8 +280,8 @@ var _ = Describe("KindclusterController", func() {
 
 		It("gets the control plane endpoint", func() {
 			Expect(clusterProvider.GetControlPlaneEndpointCallCount()).To(Equal(1))
-			name := clusterProvider.GetControlPlaneEndpointArgsForCall(0)
-			Expect(name).To(Equal("the-kind-cluster-name"))
+			actualCluster := clusterProvider.GetControlPlaneEndpointArgsForCall(0)
+			Expect(actualCluster).To(Equal(kindCluster))
 		})
 
 		It("sets the control plane endpoint", func() {
@@ -402,6 +402,8 @@ var _ = Describe("KindclusterController", func() {
 
 		It("deletes the cluster", func() {
 			Expect(clusterProvider.DeleteCallCount()).To(Equal(1))
+			actualCluster := clusterProvider.DeleteArgsForCall(0)
+			Expect(actualCluster).To(Equal(kindCluster))
 		})
 
 		It("removes the finalizer", func() {

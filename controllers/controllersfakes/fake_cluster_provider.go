@@ -4,14 +4,15 @@ package controllersfakes
 import (
 	"sync"
 
+	"github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
 	"github.com/mnitchev/cluster-api-provider-kind/controllers"
 )
 
 type FakeClusterProvider struct {
-	CreateStub        func(string) error
+	CreateStub        func(*v1alpha3.KindCluster) error
 	createMutex       sync.RWMutex
 	createArgsForCall []struct {
-		arg1 string
+		arg1 *v1alpha3.KindCluster
 	}
 	createReturns struct {
 		result1 error
@@ -19,10 +20,10 @@ type FakeClusterProvider struct {
 	createReturnsOnCall map[int]struct {
 		result1 error
 	}
-	DeleteStub        func(string) error
+	DeleteStub        func(*v1alpha3.KindCluster) error
 	deleteMutex       sync.RWMutex
 	deleteArgsForCall []struct {
-		arg1 string
+		arg1 *v1alpha3.KindCluster
 	}
 	deleteReturns struct {
 		result1 error
@@ -30,10 +31,10 @@ type FakeClusterProvider struct {
 	deleteReturnsOnCall map[int]struct {
 		result1 error
 	}
-	ExistsStub        func(string) (bool, error)
+	ExistsStub        func(*v1alpha3.KindCluster) (bool, error)
 	existsMutex       sync.RWMutex
 	existsArgsForCall []struct {
-		arg1 string
+		arg1 *v1alpha3.KindCluster
 	}
 	existsReturns struct {
 		result1 bool
@@ -43,10 +44,10 @@ type FakeClusterProvider struct {
 		result1 bool
 		result2 error
 	}
-	GetControlPlaneEndpointStub        func(string) (string, int, error)
+	GetControlPlaneEndpointStub        func(*v1alpha3.KindCluster) (string, int, error)
 	getControlPlaneEndpointMutex       sync.RWMutex
 	getControlPlaneEndpointArgsForCall []struct {
-		arg1 string
+		arg1 *v1alpha3.KindCluster
 	}
 	getControlPlaneEndpointReturns struct {
 		result1 string
@@ -62,11 +63,11 @@ type FakeClusterProvider struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeClusterProvider) Create(arg1 string) error {
+func (fake *FakeClusterProvider) Create(arg1 *v1alpha3.KindCluster) error {
 	fake.createMutex.Lock()
 	ret, specificReturn := fake.createReturnsOnCall[len(fake.createArgsForCall)]
 	fake.createArgsForCall = append(fake.createArgsForCall, struct {
-		arg1 string
+		arg1 *v1alpha3.KindCluster
 	}{arg1})
 	stub := fake.CreateStub
 	fakeReturns := fake.createReturns
@@ -87,13 +88,13 @@ func (fake *FakeClusterProvider) CreateCallCount() int {
 	return len(fake.createArgsForCall)
 }
 
-func (fake *FakeClusterProvider) CreateCalls(stub func(string) error) {
+func (fake *FakeClusterProvider) CreateCalls(stub func(*v1alpha3.KindCluster) error) {
 	fake.createMutex.Lock()
 	defer fake.createMutex.Unlock()
 	fake.CreateStub = stub
 }
 
-func (fake *FakeClusterProvider) CreateArgsForCall(i int) string {
+func (fake *FakeClusterProvider) CreateArgsForCall(i int) *v1alpha3.KindCluster {
 	fake.createMutex.RLock()
 	defer fake.createMutex.RUnlock()
 	argsForCall := fake.createArgsForCall[i]
@@ -123,11 +124,11 @@ func (fake *FakeClusterProvider) CreateReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
-func (fake *FakeClusterProvider) Delete(arg1 string) error {
+func (fake *FakeClusterProvider) Delete(arg1 *v1alpha3.KindCluster) error {
 	fake.deleteMutex.Lock()
 	ret, specificReturn := fake.deleteReturnsOnCall[len(fake.deleteArgsForCall)]
 	fake.deleteArgsForCall = append(fake.deleteArgsForCall, struct {
-		arg1 string
+		arg1 *v1alpha3.KindCluster
 	}{arg1})
 	stub := fake.DeleteStub
 	fakeReturns := fake.deleteReturns
@@ -148,13 +149,13 @@ func (fake *FakeClusterProvider) DeleteCallCount() int {
 	return len(fake.deleteArgsForCall)
 }
 
-func (fake *FakeClusterProvider) DeleteCalls(stub func(string) error) {
+func (fake *FakeClusterProvider) DeleteCalls(stub func(*v1alpha3.KindCluster) error) {
 	fake.deleteMutex.Lock()
 	defer fake.deleteMutex.Unlock()
 	fake.DeleteStub = stub
 }
 
-func (fake *FakeClusterProvider) DeleteArgsForCall(i int) string {
+func (fake *FakeClusterProvider) DeleteArgsForCall(i int) *v1alpha3.KindCluster {
 	fake.deleteMutex.RLock()
 	defer fake.deleteMutex.RUnlock()
 	argsForCall := fake.deleteArgsForCall[i]
@@ -184,11 +185,11 @@ func (fake *FakeClusterProvider) DeleteReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
-func (fake *FakeClusterProvider) Exists(arg1 string) (bool, error) {
+func (fake *FakeClusterProvider) Exists(arg1 *v1alpha3.KindCluster) (bool, error) {
 	fake.existsMutex.Lock()
 	ret, specificReturn := fake.existsReturnsOnCall[len(fake.existsArgsForCall)]
 	fake.existsArgsForCall = append(fake.existsArgsForCall, struct {
-		arg1 string
+		arg1 *v1alpha3.KindCluster
 	}{arg1})
 	stub := fake.ExistsStub
 	fakeReturns := fake.existsReturns
@@ -209,13 +210,13 @@ func (fake *FakeClusterProvider) ExistsCallCount() int {
 	return len(fake.existsArgsForCall)
 }
 
-func (fake *FakeClusterProvider) ExistsCalls(stub func(string) (bool, error)) {
+func (fake *FakeClusterProvider) ExistsCalls(stub func(*v1alpha3.KindCluster) (bool, error)) {
 	fake.existsMutex.Lock()
 	defer fake.existsMutex.Unlock()
 	fake.ExistsStub = stub
 }
 
-func (fake *FakeClusterProvider) ExistsArgsForCall(i int) string {
+func (fake *FakeClusterProvider) ExistsArgsForCall(i int) *v1alpha3.KindCluster {
 	fake.existsMutex.RLock()
 	defer fake.existsMutex.RUnlock()
 	argsForCall := fake.existsArgsForCall[i]
@@ -248,11 +249,11 @@ func (fake *FakeClusterProvider) ExistsReturnsOnCall(i int, result1 bool, result
 	}{result1, result2}
 }
 
-func (fake *FakeClusterProvider) GetControlPlaneEndpoint(arg1 string) (string, int, error) {
+func (fake *FakeClusterProvider) GetControlPlaneEndpoint(arg1 *v1alpha3.KindCluster) (string, int, error) {
 	fake.getControlPlaneEndpointMutex.Lock()
 	ret, specificReturn := fake.getControlPlaneEndpointReturnsOnCall[len(fake.getControlPlaneEndpointArgsForCall)]
 	fake.getControlPlaneEndpointArgsForCall = append(fake.getControlPlaneEndpointArgsForCall, struct {
-		arg1 string
+		arg1 *v1alpha3.KindCluster
 	}{arg1})
 	stub := fake.GetControlPlaneEndpointStub
 	fakeReturns := fake.getControlPlaneEndpointReturns
@@ -273,13 +274,13 @@ func (fake *FakeClusterProvider) GetControlPlaneEndpointCallCount() int {
 	return len(fake.getControlPlaneEndpointArgsForCall)
 }
 
-func (fake *FakeClusterProvider) GetControlPlaneEndpointCalls(stub func(string) (string, int, error)) {
+func (fake *FakeClusterProvider) GetControlPlaneEndpointCalls(stub func(*v1alpha3.KindCluster) (string, int, error)) {
 	fake.getControlPlaneEndpointMutex.Lock()
 	defer fake.getControlPlaneEndpointMutex.Unlock()
 	fake.GetControlPlaneEndpointStub = stub
 }
 
-func (fake *FakeClusterProvider) GetControlPlaneEndpointArgsForCall(i int) string {
+func (fake *FakeClusterProvider) GetControlPlaneEndpointArgsForCall(i int) *v1alpha3.KindCluster {
 	fake.getControlPlaneEndpointMutex.RLock()
 	defer fake.getControlPlaneEndpointMutex.RUnlock()
 	argsForCall := fake.getControlPlaneEndpointArgsForCall[i]

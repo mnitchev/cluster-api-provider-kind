@@ -40,10 +40,10 @@ import (
 //+kubebuilder:rbac:groups=cluster.x-k8s.io,resources=clusters,verbs=get;list;watch
 
 type ClusterProvider interface {
-	Create(string) error
-	Exists(string) (bool, error)
-	Delete(string) error
-	GetControlPlaneEndpoint(string) (string, int, error)
+	Create(*kclusterv1.KindCluster) error
+	Exists(*kclusterv1.KindCluster) (bool, error)
+	Delete(*kclusterv1.KindCluster) error
+	GetControlPlaneEndpoint(*kclusterv1.KindCluster) (string, int, error)
 }
 
 type KindClusterClient interface {
@@ -123,7 +123,7 @@ func (r *KindClusterReconciler) reconcileDeletion(ctx context.Context, logger lo
 	}
 	r.updateStatus(logger, status, kindCluster)
 
-	err := r.clusterProvider.Delete(kindCluster.Spec.Name)
+	err := r.clusterProvider.Delete(kindCluster)
 	if err != nil {
 		logger.Error(err, "failed to delete kind cluster")
 		return ctrl.Result{}, err
@@ -149,7 +149,7 @@ func (r *KindClusterReconciler) reconcileNormal(ctx context.Context, logger logr
 	}
 	defer r.updateStatus(logger, status, kindCluster)
 
-	exists, err := r.clusterProvider.Exists(kindCluster.Spec.Name)
+	exists, err := r.clusterProvider.Exists(kindCluster)
 	if err != nil {
 		logger.Error(err, "failed to check if kind cluster exists")
 		return ctrl.Result{}, err
@@ -209,7 +209,7 @@ func (r *KindClusterReconciler) createCluster(logger logr.Logger, kindCluster *k
 	}
 	defer r.updateStatus(logger, status, kindCluster)
 
-	err := r.clusterProvider.Create(kindCluster.Spec.Name)
+	err := r.clusterProvider.Create(kindCluster)
 	if err != nil {
 		status.Phase = kclusterv1.ClusterPhasePending
 		logger.Error(err, "failed to create cluster")
@@ -227,7 +227,7 @@ func (r *KindClusterReconciler) updateStatus(logger logr.Logger, status *kcluste
 }
 
 func (r *KindClusterReconciler) setControlPlaneEndpoint(ctx context.Context, logger logr.Logger, kindCluster *kclusterv1.KindCluster) error {
-	host, port, err := r.clusterProvider.GetControlPlaneEndpoint(kindCluster.Spec.Name)
+	host, port, err := r.clusterProvider.GetControlPlaneEndpoint(kindCluster)
 	if err != nil {
 		return err
 	}

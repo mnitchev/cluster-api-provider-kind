@@ -4,10 +4,12 @@ import (
 	"os"
 
 	"github.com/google/uuid"
+	kclusterv1 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
 	"github.com/mnitchev/cluster-api-provider-kind/infrastructure"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/kind/pkg/cluster"
 )
 
@@ -16,17 +18,27 @@ var _ = Describe("KindProvider", func() {
 		kindProvider    *infrastructure.KindProvider
 		clusterProvider *cluster.Provider
 		name            string
+		kindCluster     *kclusterv1.KindCluster
 	)
 
 	BeforeEach(func() {
 		name = uuid.New().String()
+		kindCluster = &kclusterv1.KindCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "foo",
+				Namespace: "bar",
+			},
+			Spec: kclusterv1.KindClusterSpec{
+				Name: name,
+			},
+		}
 		clusterProvider = cluster.NewProvider()
 		kindProvider = infrastructure.NewKindProvider(kubeconfig, clusterProvider)
 	})
 
 	Describe("Create", func() {
 		BeforeEach(func() {
-			err := kindProvider.Create(name)
+			err := kindProvider.Create(kindCluster)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -42,7 +54,7 @@ var _ = Describe("KindProvider", func() {
 
 		When("the cluster already exists", func() {
 			It("returns an error", func() {
-				err := kindProvider.Create(name)
+				err := kindProvider.Create(kindCluster)
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -60,7 +72,7 @@ var _ = Describe("KindProvider", func() {
 			})
 
 			It("returns true", func() {
-				exists, err := kindProvider.Exists(name)
+				exists, err := kindProvider.Exists(kindCluster)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(exists).To(BeTrue())
 			})
@@ -68,7 +80,7 @@ var _ = Describe("KindProvider", func() {
 
 		When("the cluster does not exist", func() {
 			It("returns false", func() {
-				exists, err := kindProvider.Exists(name)
+				exists, err := kindProvider.Exists(kindCluster)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(exists).To(BeFalse())
 			})
@@ -83,7 +95,7 @@ var _ = Describe("KindProvider", func() {
 			})
 
 			It("succeeds", func() {
-				err := kindProvider.Delete(name)
+				err := kindProvider.Delete(kindCluster)
 				Expect(err).NotTo(HaveOccurred())
 
 				clusters, err := clusterProvider.List()
@@ -94,7 +106,7 @@ var _ = Describe("KindProvider", func() {
 
 		When("the cluster does not exist", func() {
 			It("returns an error", func() {
-				err := kindProvider.Delete(name)
+				err := kindProvider.Delete(kindCluster)
 				Expect(err).NotTo(HaveOccurred())
 			})
 		})
@@ -102,7 +114,7 @@ var _ = Describe("KindProvider", func() {
 
 	Describe("GetControlPlaneEndpoint", func() {
 		BeforeEach(func() {
-			err := kindProvider.Create(name)
+			err := kindProvider.Create(kindCluster)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -111,7 +123,7 @@ var _ = Describe("KindProvider", func() {
 		})
 
 		It("gets the endpoint", func() {
-			host, port, err := kindProvider.GetControlPlaneEndpoint(name)
+			host, port, err := kindProvider.GetControlPlaneEndpoint(kindCluster)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(host).To(Equal("127.0.0.1"))
 			Expect(port).To(BeNumerically(">", 1024))
@@ -134,14 +146,18 @@ var _ = Describe("KindProvider", func() {
 			},
 
 			Entry("create", func() error {
-				return kindProvider.Create(name)
+				return kindProvider.Create(kindCluster)
 			}),
 			Entry("exists", func() error {
-				_, err := kindProvider.Exists(name)
+				_, err := kindProvider.Exists(kindCluster)
 				return err
 			}),
 			Entry("delete", func() error {
-				return kindProvider.Delete(name)
+				return kindProvider.Delete(kindCluster)
+			}),
+			Entry("get control plane endpoint", func() error {
+				_, err := kindProvider.Exists(kindCluster)
+				return err
 			}),
 		)
 	})
