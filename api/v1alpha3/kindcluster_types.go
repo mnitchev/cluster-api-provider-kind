@@ -38,10 +38,19 @@ type KindClusterSpec struct {
 	//+kubebuilder:validation:Required
 	Name string `json:"name"`
 
+	// ControlPlaneNodes specifies the number of control plane nodes for the
+	// kind cluster
+	//+optional
+	ControlPlaneNodes int `json:"controlPlaneNodes"`
+
+	// WorkerNodes specifies the number of worker nodes for the kind cluster
+	//+optional
+	WorkerNodes int `json:"workerNodes"`
+
 	// ControlPlaneEndpoint is the host and port at which the cluster is
 	// reachable. It will be set by the controller after the cluster has
 	// reached the Created phase.
-	//+kubebuilder:validation:Optional
+	//+optional
 	ControlPlaneEndpoint APIEndpoint `json:"controlPlaneEndpoint"`
 }
 

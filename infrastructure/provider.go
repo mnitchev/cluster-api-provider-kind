@@ -10,6 +10,7 @@ import (
 
 	kclusterv1 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
 	"k8s.io/client-go/tools/clientcmd"
+	"sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 	"sigs.k8s.io/kind/pkg/cluster"
 )
 
@@ -30,6 +31,7 @@ func NewKindProvider(kubeconfigPath string, clusterProvider *cluster.Provider) *
 func (p *KindProvider) Create(kindCluster *kclusterv1.KindCluster) error {
 	return p.clusterProvider.Create(
 		kindCluster.Spec.Name,
+		cluster.CreateWithV1Alpha4Config(toConfig(kindCluster)),
 		cluster.CreateWithKubeconfigPath(p.kubeconfigPath),
 		cluster.CreateWithWaitForReady(defaultWaitTime))
 }
@@ -87,4 +89,17 @@ func (p *KindProvider) GetControlPlaneEndpoint(kindCluster *kclusterv1.KindClust
 	}
 
 	return host, port, nil
+}
+
+func toConfig(kindCluster *kclusterv1.KindCluster) *v1alpha4.Cluster {
+	nodes := []v1alpha4.Node{}
+	for i := 0; i < kindCluster.Spec.ControlPlaneNodes; i++ {
+		nodes = append(nodes, v1alpha4.Node{Role: v1alpha4.ControlPlaneRole})
+	}
+	for i := 0; i < kindCluster.Spec.WorkerNodes; i++ {
+		nodes = append(nodes, v1alpha4.Node{Role: v1alpha4.WorkerRole})
+	}
+	return &v1alpha4.Cluster{
+		Nodes: nodes,
+	}
 }

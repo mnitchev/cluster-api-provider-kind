@@ -58,11 +58,19 @@ spec:
                 - host
                 - port
                 type: object
+              controlPlaneNodes:
+                description: ControlPlaneNodes specifies the number of control plane
+                  nodes for the kind cluster
+                type: integer
               name:
                 description: Name is the name with which the actual kind cluster will
                   be created. If the name already exists the KindCluster will stay
                   in the Pending phase until the cluster is removed
                 type: string
+              workerNodes:
+                description: WorkerNodes specifies the number of worker nodes for
+                  the kind cluster
+                type: integer
             required:
             - name
             type: object

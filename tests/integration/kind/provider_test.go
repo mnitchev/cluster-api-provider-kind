@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/kind/pkg/cluster"
+	"sigs.k8s.io/kind/pkg/cluster/constants"
 )
 
 var _ = Describe("KindProvider", func() {
@@ -37,7 +38,7 @@ var _ = Describe("KindProvider", func() {
 	})
 
 	Describe("Create", func() {
-		BeforeEach(func() {
+		JustBeforeEach(func() {
 			err := kindProvider.Create(kindCluster)
 			Expect(err).NotTo(HaveOccurred())
 		})
@@ -56,6 +57,34 @@ var _ = Describe("KindProvider", func() {
 			It("returns an error", func() {
 				err := kindProvider.Create(kindCluster)
 				Expect(err).To(HaveOccurred())
+			})
+		})
+
+		When("the cluster has specified a number of control plane and worker nodes", func() {
+			BeforeEach(func() {
+				kindCluster.Spec.ControlPlaneNodes = 2
+				kindCluster.Spec.WorkerNodes = 2
+			})
+
+			It("creates the cluster with the specified number of nodes", func() {
+				nodes, err := clusterProvider.ListNodes(name)
+				Expect(err).NotTo(HaveOccurred())
+				controlPlaneNodes := 0
+				workerNodes := 0
+				for _, n := range nodes {
+					role, err := n.Role()
+					Expect(err).NotTo(HaveOccurred())
+
+					if role == constants.ControlPlaneNodeRoleValue {
+						controlPlaneNodes++
+					}
+					if role == constants.WorkerNodeRoleValue {
+						workerNodes++
+					}
+				}
+
+				Expect(controlPlaneNodes).To(Equal(2))
+				Expect(workerNodes).To(Equal(2))
 			})
 		})
 	})
