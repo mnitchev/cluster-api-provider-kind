@@ -1,7 +1,7 @@
 
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
-CLUSTER ?= acceptance
+CLUSTER ?= management-cluster
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.22
 
@@ -71,8 +71,8 @@ test-integration: manifests generate fmt vet ## Run tests.
 
 deploy-management-cluster: docker-build create-management-cluster deploy
 
-test-acceptance: deploy-acceptance
-	KUBECONFIG="$(HOME)/.kube/acceptance.yml" ginkgo -r -randomizeAllSpecs --randomizeSuites tests/acceptance
+test-acceptance: deploy-management-cluster
+	KUBECONFIG="$(HOME)/.kube/management-cluster.yml" ginkgo -p -r -randomizeAllSpecs --randomizeSuites tests/acceptance
 
 ##@ Build
 
