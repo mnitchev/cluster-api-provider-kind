@@ -44,6 +44,9 @@ spec:
             description: KindClusterSpec defines the desired state of KindCluster
             properties:
               controlPlaneEndpoint:
+                description: ControlPlaneEndpoint is the host and port at which the
+                  cluster is reachable. It will be set by the controller after the
+                  cluster has reached the Created phase.
                 properties:
                   host:
                     description: Host is the hostname on which the API server is serving.
@@ -56,6 +59,9 @@ spec:
                 - port
                 type: object
               name:
+                description: Name is the name with which the actual kind cluster will
+                  be created. If the name already exists the KindCluster will stay
+                  in the Pending phase until the cluster is removed
                 type: string
             required:
             - name
@@ -64,8 +70,13 @@ spec:
             description: KindClusterStatus defines the observed state of KindCluster
             properties:
               phase:
+                default: Pending
+                description: Phase indicates which phase the cluster creation is in
                 type: string
               ready:
+                default: false
+                description: Ready indicates if the cluster's control plane is running
+                  and ready to be used
                 type: boolean
             type: object
         type: object

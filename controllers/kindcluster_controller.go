@@ -139,6 +139,10 @@ func (r *KindClusterReconciler) reconcileDeletion(ctx context.Context, logger lo
 }
 
 func (r *KindClusterReconciler) reconcileNormal(ctx context.Context, logger logr.Logger, kindCluster *kclusterv1.KindCluster) (ctrl.Result, error) {
+	// Always update the status.
+	// By default do not change the status - this is so we don't change the
+	// status in the event of an error. In this case we should requeue the
+	// event and try again.
 	status := &kclusterv1.KindClusterStatus{
 		Ready: kindCluster.Status.Ready,
 		Phase: kindCluster.Status.Phase,
@@ -151,19 +155,20 @@ func (r *KindClusterReconciler) reconcileNormal(ctx context.Context, logger logr
 		return ctrl.Result{}, err
 	}
 
-	if !exists && kindCluster.Status.Phase != kclusterv1.ClusterPhaseProvisioning {
-		logger.Info("cluster does not exist")
-		status.Ready = false
-		status.Phase = kclusterv1.ClusterPhasePending
-	}
-
-	if exists && pendingCluster(kindCluster.Status.Phase) {
+	if exists && kindCluster.Status.Phase == kclusterv1.ClusterPhasePending {
 		existsErr := errors.New("cluster already exists")
 		logger.Error(existsErr, "failed to reconcile")
 		status.Ready = false
 		status.Phase = kclusterv1.ClusterPhasePending
 
 		return ctrl.Result{}, existsErr
+	}
+
+	if !exists && createdCluster(kindCluster.Status.Phase) {
+		logger.Info("cluster does not exist")
+		status.Ready = false
+		status.Phase = kclusterv1.ClusterPhasePending
+		return ctrl.Result{}, nil
 	}
 
 	if kindCluster.Status.Phase == kclusterv1.ClusterPhaseProvisioned {
@@ -236,4 +241,8 @@ func (r *KindClusterReconciler) setControlPlaneEndpoint(ctx context.Context, log
 
 func pendingCluster(phase kclusterv1.ClusterPhase) bool {
 	return phase == "" || phase == kclusterv1.ClusterPhasePending
+}
+
+func createdCluster(phase kclusterv1.ClusterPhase) bool {
+	return phase == kclusterv1.ClusterPhaseProvisioned || phase == kclusterv1.ClusterPhaseReady
 }

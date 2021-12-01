@@ -24,9 +24,9 @@ type ClusterPhase string
 
 const (
 	ClusterPhasePending      ClusterPhase = "Pending"
-	ClusterPhaseProvisioning ClusterPhase = "Creating"
+	ClusterPhaseProvisioning ClusterPhase = "Provisioning"
 	ClusterPhaseDeleting     ClusterPhase = "Deleting"
-	ClusterPhaseProvisioned  ClusterPhase = "Created"
+	ClusterPhaseProvisioned  ClusterPhase = "Provisioned"
 	ClusterPhaseReady        ClusterPhase = "Ready"
 )
 
@@ -62,6 +62,7 @@ type KindClusterStatus struct {
 	Ready bool `json:"ready"`
 	// Phase indicates which phase the cluster creation is in
 	//+kubebuilder:validation:Optional
+	//+kubebuilder:default=Pending
 	Phase ClusterPhase `json:"phase"`
 }
 
