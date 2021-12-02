@@ -66,11 +66,11 @@ type APIEndpoint struct {
 type KindClusterStatus struct {
 	// Ready indicates if the cluster's control plane is running and ready to
 	// be used
-	//+kubebuilder:validation:Optional
+	//+kubebuilder:validation:Required
 	//+kubebuilder:default=false
 	Ready bool `json:"ready"`
 	// Phase indicates which phase the cluster creation is in
-	//+kubebuilder:validation:Optional
+	//+kubebuilder:validation:Required
 	//+kubebuilder:default=Pending
 	Phase ClusterPhase `json:"phase"`
 }

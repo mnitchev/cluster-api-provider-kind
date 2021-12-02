@@ -92,6 +92,15 @@ var _ = Describe("KindclusterController", func() {
 		Expect(actualKindCluster).To(Equal(kindCluster))
 	})
 
+	It("updates the status to not ready and phase pending", func() {
+		Expect(kindClusterClient.UpdateStatusCallCount()).To(BeNumerically(">=", 1))
+		actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
+		Expect(actualContext).To(Equal(ctx))
+		Expect(actualStatus.Ready).To(BeFalse())
+		Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhasePending))
+		Expect(actualCluster).To(Equal(kindCluster))
+	})
+
 	When("getting the kind cluster fails", func() {
 		BeforeEach(func() {
 			kindClusterClient.GetReturns(nil, errors.New("boom"))

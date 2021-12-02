@@ -86,6 +86,9 @@ spec:
                 description: Ready indicates if the cluster's control plane is running
                   and ready to be used
                 type: boolean
+            required:
+            - phase
+            - ready
             type: object
         type: object
     served: true

@@ -149,6 +149,13 @@ func (r *KindClusterReconciler) reconcileNormal(ctx context.Context, logger logr
 	}
 	defer r.updateStatus(logger, status, kindCluster)
 
+	if kindCluster.Status.Phase == "" {
+		status.Ready = false
+		status.Phase = kclusterv1.ClusterPhasePending
+
+		return ctrl.Result{}, nil
+	}
+
 	exists, err := r.clusterProvider.Exists(kindCluster)
 	if err != nil {
 		logger.Error(err, "failed to check if kind cluster exists")
@@ -172,7 +179,7 @@ func (r *KindClusterReconciler) reconcileNormal(ctx context.Context, logger logr
 	}
 
 	if kindCluster.Status.Phase == kclusterv1.ClusterPhaseProvisioned {
-		logger.Info("cluster created")
+		logger.Info("setting control plane endpoint")
 		err = r.setControlPlaneEndpoint(ctx, logger, kindCluster)
 		if err != nil {
 			logger.Error(err, "failed to set control plane endpoint")
