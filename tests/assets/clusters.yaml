@@ -16,4 +16,4 @@ metadata:
   name: foo
   namespace: test
 spec:
-  name: bar-foo
+  name: foo-bar

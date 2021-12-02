@@ -1,40 +1,41 @@
 ---
+theme: ./presentation/assets/theme.json
 author: Mario Nitchev
 date: January 2, 2006
 paging: Slide %d / %d
 ---
 
-```
-                                    ,@LLL@_                           ;LLLL@,
-                                  ,@LLLLLLLb                        ,@LLLLLLL@_
-                                 $LLLLLLLLLL@_                     $LLLLLLLLLLLh
-                               ;HLLLLLLLLLLLLLb    __,,,,,,,__   ,@LLLLLLLLLLLLL$w
-                             ,@LLL$P` ]LLLLLLLL@p@HLLLLLLLLLLL@h@LLLLLLLLL` `T$LLL@,
-                           ,@LLLP^     5LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLP     `ULLL@_
-                          $LLLP`       'LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLP        `TLLLh
-                        ;@LP^      ,;p@$LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLH@hw_      "UL@w
-                      ,@LP`     ,$$LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLh,     `TL@_
-                     @P"      ;@LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL@p      "Uh
-                     `      ,@LLL5PP"""""U5LLLLLLLLLLLLLLLLLLLLLLLLLLLPP^""`""%5LLL@,
-                           ;LLLP`           "ULLLLLLLLLLLLLLLLLLLLLP`           `TLLLp
-                          ;LLLP               `TLLLLLLLLLLLLLLLLLP                lLLLL
-                          $LLP                  `ULLLLLLLLLLLLLP                   ]LLL
-                         !LLLL       Ppw_         ]LLLLLLLLLLLP                    ]LLLL
-                         !LLLL       "P@@@@hw_     $LLLLLLLLLP     __________      ]LLLL
-                          LLLL          _]@@@P     'LLLLLLLLL     @@@@@@@@@@@P     @LLL
-                          ]LLL@      pP@@@PP"`      LLLLLLLLL                     $LLLP
-                           5LLLh     PP"`           LLLLLLLL$                    $LLLP
-                            ULLL@L                 /LLLLLLLLLL                 ,@LLLP
-                             TLLLL@w_             ;$LLLLLLLLL$w              ,@LLLLP
-                               "5LLLL@w,_      ,;@LLLLLLLLLLLLL@w_       ,,@$LLLP^
-                                 `"ULLLLL$@@@$LLLLLLLLLLLLLLLLLLLL$@@@@$LLLLLP"
-                                     ``"PPP$LLLLLLLLLLLLLLLLLLLLLLLLLPPPP"`
-                                           ]LLLLLLLLLLLLLLLLLLLLLLLLP
-                                            ]LLLLLLLLLLLLLLLLLLLLLLP
-                                             ^@LLLL""PPPPPPP]LLLLP^
-                                               `TPLh       _@$P"`
-                                                   ``      `
-```
+`.                                                                                                                     . `
+`.                                                                                                                     . `
+`.                                    ,@LLL@_                           ;LLLL@,                                        . `
+`.                                  ,@LLLLLLLb                        ,@LLLLLLL@_                                      . `
+`.                                 $LLLLLLLLLL@_                     $LLLLLLLLLLLh                                     . `
+`.                               ;HLLLLLLLLLLLLLb    __,,,,,,,__   ,@LLLLLLLLLLLLL$w                                   . `
+`.                             ,@LLL$P  ]LLLLLLLL@p@HLLLLLLLLLLL@h@LLLLLLLLL   T$LLL@,                                 . `
+`.                           ,@LLLP^     5LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLP      ULLL@_                               . `
+`.                          $LLLP        'LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLP         TLLLh                              . `
+`.                        ;@LP^      ,;p@$LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLH@hw_      "UL@w                            . `
+`.                      ,@LP      ,$$LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLh,      TL@_                          . `
+`.                     @P"      ;@LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL@p      "Uh                         . `
+`.                            ,@LLL5PP"""""U5LLLLLLLLLLLLLLLLLLLLLLLLLLLPP^"" ""%5LLL@,                                . `
+`.                           ;LLLP            "ULLLLLLLLLLLLLLLLLLLLLP             TLLLp                               . `
+`.                          ;LLLP                TLLLLLLLLLLLLLLLLLP                lLLLL                              . `
+`.                          $LLP                   ULLLLLLLLLLLLLP                   ]LLL                              . `
+`.                         !LLLL       Ppw_         ]LLLLLLLLLLLP                    ]LLLL                             . `
+`.                         !LLLL       "P@@@@hw_     $LLLLLLLLLP     __________      ]LLLL                             . `
+`.                          LLLL          _]@@@P     'LLLLLLLLL     @@@@@@@@@@@P     @LLL                              . `
+`.                          ]LLL@      pP@@@PP"       LLLLLLLLL                     $LLLP                              . `
+`.                           5LLLh     PP"            LLLLLLLL$                    $LLLP                               . `
+`.                            ULLL@L                 /LLLLLLLLLL                 ,@LLLP                                . `
+`.                             TLLLL@w_             ;$LLLLLLLLL$w              ,@LLLLP                                 . `
+`.                               "5LLLL@w,_      ,;@LLLLLLLLLLLLL@w_       ,,@$LLLP^                                   . `
+`.                                  "ULLLLL$@@@$LLLLLLLLLLLLLLLLLLLL$@@@@$LLLLLP"                                      . `
+`.                                       "PPP$LLLLLLLLLLLLLLLLLLLLLLLLLPPPP"                                           . `
+`.                                           ]LLLLLLLLLLLLLLLLLLLLLLLLP                                                . `
+`.                                            ]LLLLLLLLLLLLLLLLLLLLLLP                                                 . `
+`.                                             ^@LLLL""PPPPPPP]LLLLP^                                                  . `
+`.                                                TPLh       _@$P"                                                     . `
+`.                                                                                                                     . `
 
 ---
 
@@ -341,14 +342,14 @@ Questions:
 ```go
 
 // NewProvider returns a new provider based on the supplied options
-func NewProvider() Provider {
+func NewProvider(options ...ProviderOption) *Provider {
 	// <redacted>
 }
 ```
 
 ```go
 // Create provisions and starts a kubernetes-in-docker cluster
-func (p *Provider) Create(name string, options CreateOption) error {
+func (p *Provider) Create(name string, options ...CreateOption) error {
 	// <redacted>
 }
 ```
@@ -517,8 +518,6 @@ apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
     - role: control-plane
       extraMounts:
-          - hostPath: /var/lib/docker
-            containerPath: /docker/lib/
           - hostPath: /var/run/docker.sock
             containerPath: /docker/docker.sock
 ```
@@ -649,7 +648,7 @@ Questions:
 
 ---
 
-# Phase Pending
+# Implementing the Reconciler
 
 ```go
 // KindClusterStatus defines the observed state of KindCluster
@@ -669,6 +668,70 @@ type KindClusterStatus struct {
 
 ---
 
+# Implementing the Reconciler
+
+```go
+// KindClusterSpec defines the desired state of KindCluster
+type KindClusterSpec struct {
+	// Name is the name with which the actual kind cluster will be created. If
+	// the name already exists the KindCluster will stay in the Pending phase
+	// until the cluster is removed
+	//+kubebuilder:validation:Required
+	Name string `json:"name"`
+
+	// ControlPlaneNodes specifies the number of control plane nodes for the
+	// kind cluster
+	//+optional
+	ControlPlaneNodes int `json:"controlPlaneNodes"`
+
+	// WorkerNodes specifies the number of worker nodes for the kind cluster
+	//+optional
+	WorkerNodes int `json:"workerNodes"`
+
+	// ControlPlaneEndpoint is the host and port at which the cluster is
+	// reachable. It will be set by the controller after the cluster has
+	// reached the Created phase.
+	//+optional
+	ControlPlaneEndpoint APIEndpoint `json:"controlPlaneEndpoint"`
+}
+
+```
+
+---
+
+# Implementing the Reconciler
+
+```go
+func (r *KindClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	kindCluster, err := r.kindClusters.Get(ctx, req.NamespacedName)
+	if k8serrors.IsNotFound(err) {
+		logger.Info("KindCluster no longer exists")
+		return ctrl.Result{}, nil
+	}
+	if err != nil {
+		logger.Error(err, "failed to get KindCluster")
+		return ctrl.Result{}, err
+	}
+
+	cluster, err := r.clusters.Get(ctx, kindCluster)
+	if err != nil {
+		logger.Error(err, "failed to get owner cluster")
+		return ctrl.Result{}, err
+	}
+
+	if cluster == nil {
+		logger.Info("KindCluster not owned by Cluster yet")
+		return ctrl.Result{}, nil
+	}
+
+	if !kindCluster.DeletionTimestamp.IsZero() {
+		return r.reconcileDeletion(ctx, logger, kindCluster)
+	}
+
+```
+
+---
+
 # Phase Pending
 
 ```go
@@ -681,22 +744,6 @@ type KindClusterStatus struct {
 		Phase: kindCluster.Status.Phase,
 	}
 	defer r.updateStatus(logger, status, kindCluster)
-```
-
----
-
-# Phase Pending
-
-```go
-	if exists && kindCluster.Status.Phase == kclusterv1.ClusterPhasePending {
-		existsErr := errors.New("cluster already exists")
-		logger.Error(existsErr, "failed to reconcile")
-		status.Ready = false
-		status.Phase = kclusterv1.ClusterPhasePending
-
-		return ctrl.Result{}, existsErr
-	}
-
 ```
 
 ---
@@ -723,6 +770,22 @@ type KindClusterStatus struct {
 func createdCluster(phase kclusterv1.ClusterPhase) bool {
 	return phase == kclusterv1.ClusterPhaseProvisioned || phase == kclusterv1.ClusterPhaseReady
 }
+
+```
+
+---
+
+# Phase Pending
+
+```go
+	if exists && kindCluster.Status.Phase == kclusterv1.ClusterPhasePending {
+		existsErr := errors.New("cluster already exists")
+		logger.Error(existsErr, "failed to reconcile")
+		status.Ready = false
+		status.Phase = kclusterv1.ClusterPhasePending
+
+		return ctrl.Result{}, existsErr
+	}
 
 ```
 
@@ -862,3 +925,37 @@ func (r *KindClusterReconciler) createCluster(logger logr.Logger, kindCluster *k
 -   Instead just do regular unit tests for te reconciller
 -   Add integration tests for the kind cluster Provider
 -   Add acceptance tests for the whole deployment
+
+---
+
+## Limitations / Improvements
+
+---
+
+## Limitations / Improvements
+
+-   Very slow, especially under load
+
+---
+
+## Limitations / Improvements
+
+-   Very slow, especially under load
+-   No upgrade strategy for kind clusters
+
+---
+
+## Limitations / Improvements
+
+-   Very slow, especially under load
+-   No upgrade strategy for kind clusters
+-   No failure messages / events on the resource
+
+---
+
+## Limitations / Improvements
+
+-   Very slow, especially under load
+-   No upgrade strategy for kind clusters
+-   No failure messages / events on the resource
+-   Bug with docker run exiting with 125 but still creating the cluster
