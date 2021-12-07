@@ -644,6 +644,16 @@ Questions:
 
 ---
 
+## The Hiring Task
+
+Questions:
+
+-   [x] Is calling the kind cli the only option?
+-   [x] How hard is it to run on the cluster?
+-   [x] How should duplicate names be handled?
+
+---
+
 # Lets see it in action! 🎬🍿
 
 ---
@@ -751,7 +761,7 @@ func (r *KindClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 # Phase Pending
 
 ```go
-	exists, err := r.clusterProvider.Exists(kindCluster.Spec.Name)
+	exists, err := r.clusterProvider.Exists(kindCluster)
 	if err != nil {
 		logger.Error(err, "failed to check if kind cluster exists")
 		return ctrl.Result{}, err
@@ -823,7 +833,7 @@ func (r *KindClusterReconciler) createCluster(logger logr.Logger, kindCluster *k
 	}
 	defer r.updateStatus(logger, status, kindCluster)
 
-	err := r.clusterProvider.Create(kindCluster.Spec.Name)
+	err := r.clusterProvider.Create(kindCluster)
 	if err != nil {
 		status.Phase = kclusterv1.ClusterPhasePending
 		logger.Error(err, "failed to create cluster")
@@ -867,7 +877,7 @@ func (r *KindClusterReconciler) createCluster(logger logr.Logger, kindCluster *k
 	}
 	r.updateStatus(logger, status, kindCluster)
 
-	err := r.clusterProvider.Delete(kindCluster.Spec.Name)
+	err := r.clusterProvider.Delete(kindCluster)
 	if err != nil {
 		logger.Error(err, "failed to delete kind cluster")
 		return ctrl.Result{}, err
@@ -959,3 +969,7 @@ func (r *KindClusterReconciler) createCluster(logger logr.Logger, kindCluster *k
 -   No upgrade strategy for kind clusters
 -   No failure messages / events on the resource
 -   Bug with docker run exiting with 125 but still creating the cluster
+
+---
+
+# 🎉 That's it! 🎉
