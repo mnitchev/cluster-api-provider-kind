@@ -8,10 +8,11 @@ import (
 	"strconv"
 	"time"
 
-	kclusterv1 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/kind/pkg/apis/config/v1alpha4"
 	"sigs.k8s.io/kind/pkg/cluster"
+
+	kclusterv1 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
 )
 
 const defaultWaitTime = 10 * time.Minute
@@ -63,7 +64,7 @@ func (p *KindProvider) GetControlPlaneEndpoint(kindCluster *kclusterv1.KindClust
 	defer kubeconfigFile.Close()
 	defer os.RemoveAll(kubeconfigFile.Name())
 
-	err = p.clusterProvider.ExportKubeConfig(kindCluster.Spec.Name, kubeconfigFile.Name())
+	err = p.clusterProvider.ExportKubeConfig(kindCluster.Spec.Name, kubeconfigFile.Name(), false)
 	if err != nil {
 		return "", 0, err
 	}

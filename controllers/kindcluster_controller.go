@@ -25,9 +25,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/go-logr/logr"
-	kclusterv1 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+
+	kclusterv1 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
 )
 
 //counterfeiter:generate . ClusterProvider

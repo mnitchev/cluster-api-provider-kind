@@ -5,10 +5,7 @@ import (
 	"errors"
 	"time"
 
-	kclusterv1 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
-	"github.com/mnitchev/cluster-api-provider-kind/controllers"
-	"github.com/mnitchev/cluster-api-provider-kind/controllers/controllersfakes"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,6 +13,10 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
+
+	kclusterv1 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
+	"github.com/mnitchev/cluster-api-provider-kind/controllers"
+	"github.com/mnitchev/cluster-api-provider-kind/controllers/controllersfakes"
 )
 
 var _ = Describe("KindclusterController", func() {

@@ -4,13 +4,14 @@ import (
 	"testing"
 	"time"
 
-	kclusterv1 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	kclusterv1 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
 )
 
 var k8sClient client.Client

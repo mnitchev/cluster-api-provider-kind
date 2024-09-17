@@ -4,14 +4,14 @@ import (
 	"os"
 
 	"github.com/google/uuid"
-	kclusterv1 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
-	"github.com/mnitchev/cluster-api-provider-kind/infrastructure"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/kind/pkg/cluster"
 	"sigs.k8s.io/kind/pkg/cluster/constants"
+
+	kclusterv1 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
+	"github.com/mnitchev/cluster-api-provider-kind/infrastructure"
 )
 
 var _ = Describe("KindProvider", func() {

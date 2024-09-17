@@ -3,7 +3,7 @@
 IMG ?= controller:latest
 CLUSTER ?= management-cluster
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
-ENVTEST_K8S_VERSION = 1.22
+ENVTEST_K8S_VERSION = 1.31
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -65,16 +65,16 @@ create-management-cluster:
 .PHONY: test
 test: lint test-unit test-integration test-acceptance ## Run tests.
 
-test-unit: manifests generate fmt vet envtest
-	./scripts/test
+test-unit: ginkgo manifests generate fmt vet envtest
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" $(GINKGO) -p --nodes 4 -r --randomize-all --randomize-suites --skip-package=tests
 
-test-integration: manifests generate fmt vet ## Run tests.
-	ginkgo -p -r -randomizeAllSpecs --randomizeSuites tests/integration
+test-integration: ginkgo manifests generate fmt vet ## Run tests.
+	$(GINKGO) -p -r -randomize-all --randomize-suites tests/integration
 
 deploy-management-cluster: docker-build create-management-cluster deploy
 
-test-acceptance: deploy-management-cluster
-	KUBECONFIG="$(HOME)/.kube/management-cluster.yml" ginkgo -p -r -randomizeAllSpecs --randomizeSuites tests/acceptance
+test-acceptance: ginkgo deploy-management-cluster
+	KUBECONFIG="$(HOME)/.kube/management-cluster.yml" $(GINKGO) -p -r -randomize-all --randomize-suites tests/acceptance
 
 ##@ Build
 
@@ -120,17 +120,23 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 .PHONY: controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
-	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.7.0)
+	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@latest)
 
 KUSTOMIZE = $(shell pwd)/bin/kustomize
 .PHONY: kustomize
 kustomize: ## Download kustomize locally if necessary.
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
+	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v5@latest)
 
 ENVTEST = $(shell pwd)/bin/setup-envtest
 .PHONY: envtest
 envtest: ## Download envtest-setup locally if necessary.
 	$(call go-get-tool,$(ENVTEST),sigs.k8s.io/controller-runtime/tools/setup-envtest@latest)
+
+GINKGO = $(shell pwd)/bin/ginkgo
+.PHONY: ginkgo
+ginkgo: ## Download ginkgo locally if necessary.
+	$(call go-get-tool,$(GINKGO),github.com/onsi/ginkgo/v2/ginkgo@latest)
+
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
@@ -141,7 +147,7 @@ TMP_DIR=$$(mktemp -d) ;\
 cd $$TMP_DIR ;\
 go mod init tmp ;\
 echo "Downloading $(2)" ;\
-GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
+GOBIN=$(PROJECT_DIR)/bin go install $(2) ;\
 rm -rf $$TMP_DIR ;\
 }
 endef
