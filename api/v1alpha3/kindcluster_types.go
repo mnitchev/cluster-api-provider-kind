@@ -73,6 +73,9 @@ type KindClusterStatus struct {
 	//+kubebuilder:validation:Required
 	//+kubebuilder:default=Pending
 	Phase ClusterPhase `json:"phase"`
+	// FailureMessage indicates there is a fatal problem reconciling the provider's infrastructure
+	//+kubebuilder:validation:Optional
+	FailureMessage string `json:"failureMessage"`
 }
 
 //+kubebuilder:object:root=true

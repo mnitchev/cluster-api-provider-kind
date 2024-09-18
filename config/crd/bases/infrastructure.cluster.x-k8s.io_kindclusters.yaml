@@ -83,6 +83,10 @@ spec:
           status:
             description: KindClusterStatus defines the observed state of KindCluster
             properties:
+              failureMessage:
+                description: FailureMessage indicates there is a fatal problem reconciling
+                  the provider's infrastructure
+                type: string
               phase:
                 default: Pending
                 description: Phase indicates which phase the cluster creation is in

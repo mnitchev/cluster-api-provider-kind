@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -164,8 +165,9 @@ func (r *KindClusterReconciler) reconcileNormal(ctx context.Context, kindCluster
 	// status in the event of an error. In this case we should requeue the
 	// event and try again.
 	status := &kclusterv1.KindClusterStatus{
-		Ready: kindCluster.Status.Ready,
-		Phase: kindCluster.Status.Phase,
+		Ready:          kindCluster.Status.Ready,
+		Phase:          kindCluster.Status.Phase,
+		FailureMessage: kindCluster.Status.FailureMessage,
 	}
 	defer r.updateStatus(logger, status, kindCluster)
 
@@ -185,8 +187,17 @@ func (r *KindClusterReconciler) reconcileNormal(ctx context.Context, kindCluster
 	if exists && kindCluster.Status.Phase == kclusterv1.ClusterPhasePending {
 		existsErr := errors.New("cluster already exists")
 		logger.Error(existsErr, "failed to reconcile")
+
 		status.Ready = false
 		status.Phase = kclusterv1.ClusterPhasePending
+
+		// Sometimes kind will fail to create a cluster, but still report it is
+		// there. This is because of a docker bug.
+		// See https://github.com/kubernetes-sigs/kind/issues/2530 and
+		// https://github.com/moby/moby/issues/40835
+		if status.FailureMessage == "" {
+			status.FailureMessage = existsErr.Error()
+		}
 
 		return ctrl.Result{}, existsErr
 	}
@@ -242,6 +253,7 @@ func (r *KindClusterReconciler) createCluster(logger logr.Logger, kindCluster *k
 	err := r.clusterProvider.Create(kindCluster)
 	if err != nil {
 		status.Phase = kclusterv1.ClusterPhasePending
+		status.FailureMessage = fmt.Sprintf("failed to create cluster: %v", err)
 		logger.Error(err, "failed to create cluster")
 		return
 	}

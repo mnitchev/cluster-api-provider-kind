@@ -242,6 +242,7 @@ var _ = Describe("KindclusterController", func() {
 				_, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(1)
 				Expect(actualStatus.Ready).To(BeFalse())
 				Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhasePending))
+				Expect(actualStatus.FailureMessage).To(Equal("failed to create cluster: boom"))
 				Expect(actualCluster).To(Equal(kindCluster))
 			})
 		})
