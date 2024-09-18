@@ -1,6 +1,8 @@
 # Cluster API Provider Kind
 
-Kubernetes-native declarative infrastructure for Kind. This is not a full implementation of the cluster-api specification and only supports a few Kind Config features. You can see what's supported in the [KindCluster spec](api/v1alpha3/kindcluster_types.go)
+Kubernetes-native declarative infrastructure for Kind. This is not a full implementation of the cluster-api specification and only supports a few Kind Config features. You can see what's supported in the [KindCluster spec](api/v1alpha3/kindcluster_types.go).
+
+More information on implementing providers can be found in the [cluster-api book](https://cluster-api.sigs.k8s.io/user/concepts.html#infrastructure-provider).
 
 ## Installation
 
