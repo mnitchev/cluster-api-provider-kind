@@ -22,6 +22,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/go-logr/logr"
@@ -29,6 +30,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	kclusterv1 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
+	"github.com/mnitchev/cluster-api-provider-kind/k8s"
 )
 
 //counterfeiter:generate . ClusterProvider
@@ -124,6 +126,11 @@ func (r *KindClusterReconciler) reconcileDeletion(ctx context.Context, kindClust
 
 	logger.Info("reconciling delete")
 	defer logger.Info("done reconciling delete")
+
+	if !controllerutil.ContainsFinalizer(kindCluster, k8s.ClusterFinalizer) {
+		logger.Info("cluster does not have finalizer")
+		return ctrl.Result{}, nil
+	}
 
 	status := &kclusterv1.KindClusterStatus{
 		Ready: false,

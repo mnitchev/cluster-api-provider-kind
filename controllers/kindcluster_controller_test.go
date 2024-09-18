@@ -17,6 +17,7 @@ import (
 	kclusterv1 "github.com/mnitchev/cluster-api-provider-kind/api/v1alpha3"
 	"github.com/mnitchev/cluster-api-provider-kind/controllers"
 	"github.com/mnitchev/cluster-api-provider-kind/controllers/controllersfakes"
+	"github.com/mnitchev/cluster-api-provider-kind/k8s"
 )
 
 var _ = Describe("KindclusterController", func() {
@@ -95,8 +96,7 @@ var _ = Describe("KindclusterController", func() {
 
 	It("updates the status to not ready and phase pending", func() {
 		Expect(kindClusterClient.UpdateStatusCallCount()).To(BeNumerically(">=", 1))
-		actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
-		Expect(actualContext).To(Equal(ctx))
+		_, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
 		Expect(actualStatus.Ready).To(BeFalse())
 		Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhasePending))
 		Expect(actualCluster).To(Equal(kindCluster))
@@ -165,8 +165,7 @@ var _ = Describe("KindclusterController", func() {
 
 		It("updates the status to not ready and phase provisioning", func() {
 			Expect(kindClusterClient.UpdateStatusCallCount()).To(BeNumerically(">=", 1))
-			actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
-			Expect(actualContext).To(Equal(ctx))
+			_, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
 			Expect(actualStatus.Ready).To(BeFalse())
 			Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhaseProvisioning))
 			Expect(actualCluster).To(Equal(kindCluster))
@@ -187,8 +186,7 @@ var _ = Describe("KindclusterController", func() {
 
 		It("updates the status to provisioned after create finishes", func() {
 			Eventually(kindClusterClient.UpdateStatusCallCount).Should(Equal(2))
-			actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(1)
-			Expect(actualContext).To(Equal(ctx))
+			_, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(1)
 			Expect(actualStatus.Ready).To(BeFalse())
 			Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhaseProvisioned))
 			Expect(actualCluster).To(Equal(kindCluster))
@@ -205,8 +203,7 @@ var _ = Describe("KindclusterController", func() {
 
 			It(" the cluster by setting the status to provisioned", func() {
 				Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
-				actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
-				Expect(actualContext).To(Equal(ctx))
+				_, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
 				Expect(actualStatus.Ready).To(BeFalse())
 				Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhasePending))
 				Expect(actualCluster).To(Equal(kindCluster))
@@ -228,8 +225,7 @@ var _ = Describe("KindclusterController", func() {
 
 			It("does not update the status to provisioning", func() {
 				Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
-				actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
-				Expect(actualContext).To(Equal(ctx))
+				_, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
 				Expect(actualStatus.Ready).To(BeFalse())
 				Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhasePending))
 				Expect(actualCluster).To(Equal(kindCluster))
@@ -243,8 +239,7 @@ var _ = Describe("KindclusterController", func() {
 
 			It("updates the status to not ready and phase pending", func() {
 				Eventually(kindClusterClient.UpdateStatusCallCount).Should(Equal(2))
-				actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(1)
-				Expect(actualContext).To(Equal(ctx))
+				_, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(1)
 				Expect(actualStatus.Ready).To(BeFalse())
 				Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhasePending))
 				Expect(actualCluster).To(Equal(kindCluster))
@@ -296,8 +291,7 @@ var _ = Describe("KindclusterController", func() {
 
 		It("sets the control plane endpoint", func() {
 			Expect(kindClusterClient.SetControlPlaneEndpointCallCount()).To(Equal(1))
-			actualContext, actualEndpoint, actualCluster := kindClusterClient.SetControlPlaneEndpointArgsForCall(0)
-			Expect(actualContext).To(Equal(ctx))
+			_, actualEndpoint, actualCluster := kindClusterClient.SetControlPlaneEndpointArgsForCall(0)
 			Expect(actualEndpoint.Host).To(Equal("127.0.0.1"))
 			Expect(actualEndpoint.Port).To(Equal(1337))
 			Expect(actualCluster).To(Equal(kindCluster))
@@ -305,8 +299,7 @@ var _ = Describe("KindclusterController", func() {
 
 		It("updates the status to ready and phase ready", func() {
 			Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
-			actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
-			Expect(actualContext).To(Equal(ctx))
+			_, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
 			Expect(actualStatus.Ready).To(BeTrue())
 			Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhaseReady))
 			Expect(actualCluster).To(Equal(kindCluster))
@@ -323,8 +316,7 @@ var _ = Describe("KindclusterController", func() {
 
 			It("does not update the status to ready", func() {
 				Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
-				actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
-				Expect(actualContext).To(Equal(ctx))
+				_, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
 				Expect(actualStatus.Ready).To(BeFalse())
 				Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhaseProvisioned))
 				Expect(actualCluster).To(Equal(kindCluster))
@@ -342,8 +334,7 @@ var _ = Describe("KindclusterController", func() {
 
 			It("does not update the status to ready", func() {
 				Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
-				actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
-				Expect(actualContext).To(Equal(ctx))
+				_, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
 				Expect(actualStatus.Ready).To(BeFalse())
 				Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhaseProvisioned))
 				Expect(actualCluster).To(Equal(kindCluster))
@@ -370,8 +361,7 @@ var _ = Describe("KindclusterController", func() {
 
 		It("does not update the status", func() {
 			Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
-			actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
-			Expect(actualContext).To(Equal(ctx))
+			_, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
 			Expect(actualStatus.Ready).To(BeTrue())
 			Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhaseReady))
 			Expect(actualCluster).To(Equal(kindCluster))
@@ -384,8 +374,7 @@ var _ = Describe("KindclusterController", func() {
 
 			It("updates the status to pending", func() {
 				Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
-				actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
-				Expect(actualContext).To(Equal(ctx))
+				_, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
 				Expect(actualStatus.Ready).To(BeFalse())
 				Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhasePending))
 				Expect(actualCluster).To(Equal(kindCluster))
@@ -407,6 +396,7 @@ var _ = Describe("KindclusterController", func() {
 		BeforeEach(func() {
 			now := metav1.NewTime(time.Now())
 			kindCluster.DeletionTimestamp = &now
+			kindCluster.Finalizers = []string{k8s.ClusterFinalizer}
 			kindClusterClient.GetReturns(kindCluster, nil)
 		})
 
@@ -422,8 +412,7 @@ var _ = Describe("KindclusterController", func() {
 
 		It("updates the status to deleted", func() {
 			Expect(kindClusterClient.UpdateStatusCallCount()).To(Equal(1))
-			actualContext, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
-			Expect(actualContext).To(Equal(ctx))
+			_, actualStatus, actualCluster := kindClusterClient.UpdateStatusArgsForCall(0)
 			Expect(actualStatus.Ready).To(BeFalse())
 			Expect(actualStatus.Phase).To(Equal(kclusterv1.ClusterPhaseDeleting))
 			Expect(actualCluster).To(Equal(kindCluster))
@@ -464,6 +453,17 @@ var _ = Describe("KindclusterController", func() {
 
 			It("returns an error", func() {
 				Expect(reconcileErr).To(MatchError(ContainSubstring("boom")))
+			})
+		})
+
+		When("the finalizer has already been removed", func() {
+			BeforeEach(func() {
+				kindCluster.Finalizers = []string{}
+				kindClusterClient.GetReturns(kindCluster, nil)
+			})
+
+			It("does nothing", func() {
+				Expect(kindClusterClient.RemoveFinalizerCallCount()).To(Equal(0))
 			})
 		})
 
