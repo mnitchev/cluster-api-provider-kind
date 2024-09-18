@@ -1,7 +1,6 @@
 package infrastructure
 
 import (
-	"io/ioutil"
 	"net"
 	"net/url"
 	"os"
@@ -57,7 +56,7 @@ func (p *KindProvider) Delete(kindCluster *kclusterv1.KindCluster) error {
 }
 
 func (p *KindProvider) GetControlPlaneEndpoint(kindCluster *kclusterv1.KindCluster) (host string, port int, err error) {
-	kubeconfigFile, err := ioutil.TempFile("", "")
+	kubeconfigFile, err := os.CreateTemp("", "")
 	if err != nil {
 		return "", 0, err
 	}
