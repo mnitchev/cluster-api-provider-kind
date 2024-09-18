@@ -83,7 +83,6 @@ func (r *KindClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 func (r *KindClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-	logger = logger.WithValues("name", req.Name, "namespace", req.Namespace)
 
 	kindCluster, err := r.kindClusters.Get(ctx, req.NamespacedName)
 	if k8serrors.IsNotFound(err) {
@@ -106,18 +105,26 @@ func (r *KindClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, nil
 	}
 
+	logger = logger.WithValues("cluster-name", kindCluster.Spec.Name)
+	ctx = log.IntoContext(ctx, logger)
+
 	if !kindCluster.DeletionTimestamp.IsZero() {
-		return r.reconcileDeletion(ctx, logger, kindCluster)
+		return r.reconcileDeletion(ctx, kindCluster)
 	}
 
 	if kindCluster.Status.Phase == kclusterv1.ClusterPhaseProvisioning {
 		logger.Info("cluster still creating - skipping event")
 		return ctrl.Result{Requeue: true}, nil
 	}
-	return r.reconcileNormal(ctx, logger, kindCluster)
+	return r.reconcileNormal(ctx, kindCluster)
 }
 
-func (r *KindClusterReconciler) reconcileDeletion(ctx context.Context, logger logr.Logger, kindCluster *kclusterv1.KindCluster) (ctrl.Result, error) {
+func (r *KindClusterReconciler) reconcileDeletion(ctx context.Context, kindCluster *kclusterv1.KindCluster) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+
+	logger.Info("reconciling delete")
+	defer logger.Info("done reconciling delete")
+
 	status := &kclusterv1.KindClusterStatus{
 		Ready: false,
 		Phase: kclusterv1.ClusterPhaseDeleting,
@@ -139,7 +146,12 @@ func (r *KindClusterReconciler) reconcileDeletion(ctx context.Context, logger lo
 	return ctrl.Result{}, nil
 }
 
-func (r *KindClusterReconciler) reconcileNormal(ctx context.Context, logger logr.Logger, kindCluster *kclusterv1.KindCluster) (ctrl.Result, error) {
+func (r *KindClusterReconciler) reconcileNormal(ctx context.Context, kindCluster *kclusterv1.KindCluster) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+
+	logger.Info("reconciling create")
+	defer logger.Info("done reconciling create. Cluster will be created in background")
+
 	// Always update the status.
 	// By default do not change the status - this is so we don't change the
 	// status in the event of an error. In this case we should requeue the
@@ -211,6 +223,9 @@ func (r *KindClusterReconciler) reconcileNormal(ctx context.Context, logger logr
 }
 
 func (r *KindClusterReconciler) createCluster(logger logr.Logger, kindCluster *kclusterv1.KindCluster) {
+	logger.Info("starting cluster creation")
+	defer logger.Info("cluster created")
+
 	status := &kclusterv1.KindClusterStatus{
 		Ready: false,
 		Phase: kclusterv1.ClusterPhaseProvisioned,
@@ -223,8 +238,6 @@ func (r *KindClusterReconciler) createCluster(logger logr.Logger, kindCluster *k
 		logger.Error(err, "failed to create cluster")
 		return
 	}
-
-	logger.Info("cluster created")
 }
 
 func (r *KindClusterReconciler) updateStatus(logger logr.Logger, status *kclusterv1.KindClusterStatus, kindCluster *kclusterv1.KindCluster) {
