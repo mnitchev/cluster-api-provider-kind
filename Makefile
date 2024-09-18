@@ -56,25 +56,34 @@ fmt: ## Run go fmt against code.
 vet: ## Run go vet against code.
 	go vet ./...
 
+.PHONY: lint
 lint:
 	golangci-lint run -v
 
-create-management-cluster:
-	CLUSTER=$(CLUSTER) IMAGE=$(IMG) ./scripts/create-management-cluster.sh
+.PHONY: create-management-cluster
+create-management-cluster: kind clusterctl
+	KIND=$(KIND) CLUSTERCTL=$(CLUSTERCTL) CLUSTER=$(CLUSTER) IMAGE=$(IMG) ./scripts/create-management-cluster.sh
 
 .PHONY: test
 test: lint test-unit test-integration test-acceptance ## Run tests.
 
+.PHONY: test-unit
 test-unit: ginkgo manifests generate fmt vet envtest
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) -p path)" $(GINKGO) -p --nodes 4 -r --randomize-all --randomize-suites --skip-package=tests
 
+.PHONY: test-integration
 test-integration: ginkgo manifests generate fmt vet ## Run tests.
 	$(GINKGO) -p -r -randomize-all --randomize-suites tests/integration
 
-deploy-management-cluster: docker-build create-management-cluster deploy
+.PHONY: deploy-management-cluster
+deploy-management-cluster: docker-build create-management-cluster undeploy deploy
 
-test-acceptance: ginkgo deploy-management-cluster
-	KUBECONFIG="$(HOME)/.kube/management-cluster.yml" $(GINKGO) -p -r -randomize-all --randomize-suites tests/acceptance
+.PHONY: run-acceptance-tests # Run acceptance tests without redeploying.
+run-acceptance-tests:
+	KUBECONFIG="$(HOME)/.kube/management-cluster.yml" $(GINKGO) -p --nodes 4 -r -randomize-all --randomize-suites tests/acceptance
+
+.PHONY: test-acceptance # Build, deploy and run acceptance tests.
+test-acceptance: ginkgo deploy-management-cluster run-acceptance-tests
 
 ##@ Build
 
@@ -137,6 +146,15 @@ GINKGO = $(shell pwd)/bin/ginkgo
 ginkgo: ## Download ginkgo locally if necessary.
 	$(call go-get-tool,$(GINKGO),github.com/onsi/ginkgo/v2/ginkgo@latest)
 
+CLUSTERCTL = $(shell pwd)/bin/clusterctl
+.PHONY: clusterctl
+clusterctl: ## Download clusterctl locally if necessary.
+	$(call go-get-tool,$(CLUSTERCTL),sigs.k8s.io/cluster-api/cmd/clusterctl@latest)
+
+KIND = $(shell pwd)/bin/kind
+.PHONY: kind
+kind: ## Download kind locally if necessary.
+	$(call go-get-tool,$(KIND),sigs.k8s.io/kind@latest)
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))

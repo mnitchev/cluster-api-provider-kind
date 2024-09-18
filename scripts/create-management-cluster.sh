@@ -6,6 +6,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="${SCRIPT_DIR}/.."
 CLUSTER=${CLUSTER:-"acceptance"}
 IMAGE=${IMAGE:-kind-cluster-controller:latest}
+KIND="${KIND:?kind binary path not exported}"
+CLUSTERCTL="${CLUSTERCTL:?clusterctl binary path not exported}"
 
 ensure_kind_cluster() {
   local cluster
@@ -17,5 +19,5 @@ ensure_kind_cluster() {
 }
 
 ensure_kind_cluster "$CLUSTER"
-clusterctl init --kubeconfig "$HOME/.kube/$CLUSTER.yml"
-kind load docker-image --name "$CLUSTER" "$IMAGE"
+$CLUSTERCTL init --kubeconfig "$HOME/.kube/$CLUSTER.yml" --wait-providers
+$KIND load docker-image --name "$CLUSTER" "$IMAGE"
