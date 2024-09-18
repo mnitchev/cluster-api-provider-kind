@@ -79,10 +79,13 @@ test-integration: ginkgo manifests generate fmt vet ## Run tests.
 deploy-management-cluster: docker-build create-management-cluster undeploy deploy
 
 .PHONY: run-acceptance-tests # Run acceptance tests without redeploying.
+run-acceptance-tests: KUBECONFIG=$(HOME)/.kube/management-cluster.yml
 run-acceptance-tests:
-	KUBECONFIG="$(HOME)/.kube/management-cluster.yml" $(GINKGO) -p --nodes 4 -r -randomize-all --randomize-suites tests/acceptance
+	KUBECONFIG="$(KUBECONFIG)" $(GINKGO) -p --nodes 4 -r -randomize-all --randomize-suites tests/acceptance
+
 
 .PHONY: test-acceptance # Build, deploy and run acceptance tests.
+test-acceptance: KUBECONFIG=$(HOME)/.kube/management-cluster.yml
 test-acceptance: ginkgo deploy-management-cluster run-acceptance-tests
 
 ##@ Build
@@ -120,11 +123,11 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 .PHONY: deploy
 deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build config/default | kubectl apply -f -
+	$(KUSTOMIZE) build config/default | KUBECONFIG="$(KUBECONFIG)" kubectl apply -f -
 
 .PHONY: undeploy
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
-	$(KUSTOMIZE) build config/default | kubectl delete --ignore-not-found=$(ignore-not-found) -f -
+	$(KUSTOMIZE) build config/default | KUBECONFIG="$(KUBECONFIG)" kubectl delete --ignore-not-found=$(ignore-not-found) -f - || true
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 .PHONY: controller-gen
