@@ -75,7 +75,7 @@ type KindClusterStatus struct {
 	Phase ClusterPhase `json:"phase"`
 	// FailureMessage indicates there is a fatal problem reconciling the provider's infrastructure
 	//+kubebuilder:validation:Optional
-	FailureMessage string `json:"failureMessage"`
+	FailureMessage string `json:"failureMessage,omitempty"`
 }
 
 //+kubebuilder:object:root=true
