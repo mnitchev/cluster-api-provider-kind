@@ -72,14 +72,6 @@ var _ = Describe("KindClusters", func() {
 			Expect(k8sClient.Delete(ctx, cluster)).To(Succeed())
 		})
 
-		It("creates a local kind cluster", func() {
-			Eventually(func() []string {
-				clusters, err := clusterProvider.List()
-				Expect(err).NotTo(HaveOccurred())
-				return clusters
-			}).Should(ContainElement(clusterName))
-		})
-
 		It("sets the control plane endpoint", func() {
 			actualCluster := &kclusterv1.KindCluster{}
 			Eventually(func() bool {
@@ -107,6 +99,10 @@ var _ = Describe("KindClusters", func() {
 				Expect(err).NotTo(HaveOccurred())
 				return actualCluster.Status.Phase
 			}).Should(Equal(string(clusterv1.ClusterPhaseProvisioned)))
+
+			clusters, err := clusterProvider.List()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(clusters).To(ContainElement(clusterName))
 		})
 	})
 
